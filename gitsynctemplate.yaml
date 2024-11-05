@@ -10,10 +10,10 @@ spec:
   parameters:
     - title: GitSync Variables
       required:
-        - pipeline.variables.username
+        - username
         - pipeline.stages.GitsyncStageTemplate.variables.greetings
       properties:
-        pipeline.variables.username:
+        username:
           title: Username
           type: string
         token:
@@ -31,7 +31,7 @@ spec:
       input:
         url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/module/cd/orgs/default/projects/tempjt/pipelines/DeepeshGitsync/pipeline-studio/?storeType=REMOTE&connectorRef=account.deepesh&repoName=idptest&branch=main
         inputset: 
-          "pipeline.variables.username": ${{ parameters['pipeline.variables.username'] }}
+          "username": ${{ parameters.username }}
           "pipeline.stages.GitsyncStageTemplate.variables.greetings": ${{ parameters['pipeline.stages.GitsyncStageTemplate.variables.greetings'] }}
         apikey: ${{ parameters.token }}
         enableVariableMapping: true

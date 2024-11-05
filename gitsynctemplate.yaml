@@ -5,7 +5,7 @@ metadata:
   title: GitSync Variable
   description: A template to test GitSync variables
 spec:
-  owner: Deepesh.kumar
+  owner: deepesh.kumar@harness.io
   type: service
   parameters:
     - title: GitSync Variables

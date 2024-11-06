@@ -23,5 +23,5 @@ pipeline:
         - name: testVariable
           type: String
           value: <+input>
-  projectIdentifier: tempjt
+  projectIdentifier: Deepesh_CDE
   orgIdentifier: default

@@ -21,7 +21,7 @@ spec:
           type: string
           ui:widget: password
           ui:field: HarnessAuthToken
-        pipeline.stages.deploy.variables.version:
+        version:
           title: Version
           type: string
   steps:
@@ -32,7 +32,7 @@ spec:
         url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/all/orgs/default/projects/Deepesh_CDE/pipelines/Idptemplate/pipeline-studio/?storeType=INLINE
         inputset: 
           "username": ${{ parameters.username }}
-          "pipeline.stages.deploy.variables.version": ${{ parameters['pipeline.stages.deploy.variables.version'] }}
+          "pipeline.stages.deploy.variables.version": ${{ parameters.version }}
         apikey: ${{ parameters.token }}
   output:
     links:

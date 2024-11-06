@@ -34,7 +34,6 @@ spec:
           "username": ${{ parameters.username }}
           "pipeline.stages.deploy.variables.version": ${{ parameters['pipeline.stages.deploy.variables.version'] }}
         apikey: ${{ parameters.token }}
-        enableVariableMapping: true
   output:
     links:
       - title: Pipeline Details

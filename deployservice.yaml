@@ -11,7 +11,7 @@ spec:
     - title: Deploy service
       required:
         - username
-        - pipeline.stages.deploy.variables.version
+        - version
       properties:
         username:
           title: Username

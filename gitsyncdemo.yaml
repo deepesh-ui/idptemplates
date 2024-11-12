@@ -29,7 +29,7 @@ spec:
       name: Writing the GitSync Variable
       action: trigger:harness-custom-pipeline
       input:
-        url: https://localhost:8181/ng/account/zEaak-FLS425IEO7OLzMUg/all/orgs/default/projects/Deepesh_CDE/pipelines/DeepeshGitsync/pipeline-studio/?storeType=REMOTE&connectorRef=deepesh_harness&repoName=idptemplates&branch=main
+        url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/module/idp-admin/orgs/default/projects/idpprojectsc/pipelines/DummyPipeline/pipeline-studio/?storeType=INLINE&stageId=DummyStage&sectionId=EXECUTION
         inputset: 
           "username": ${{ parameters.username }}
           "pipeline.stages.GitsyncStageTemplate.variables.greetings": ${{ parameters['pipeline.stages.GitsyncStageTemplate.variables.greetings'] }}

@@ -16,6 +16,12 @@ spec:
         username:
           title: Username
           type: string
+        harness_project:
+          title: Name of your harness project
+          type: string
+          default: Payments
+          description: Name of your project in harness (e.g. Payments, Data)
+          ui:field: HarnessProjectPicker  
         token:
           title: Harness Token
           type: string

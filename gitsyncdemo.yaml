@@ -21,7 +21,7 @@ spec:
           type: string
           default: Payments
           description: Name of your project in harness (e.g. Payments, Data)
-          ui:field: HarnessAutoOrgPicker  
+          ui:field: HarnessProjectPicker  
         token:
           title: Harness Token
           type: string

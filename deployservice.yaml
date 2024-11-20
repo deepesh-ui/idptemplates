@@ -33,7 +33,7 @@ spec:
         inputset: 
           "username": ${{ parameters.username }}
           "pipeline.stages.deploy.variables.version": ${{ parameters.version }}
-          "pipeline.stages.deploy.spec.execution.steps.ShellScript_2.spec.environmentVariables.test":  ${{ parameters.username }}
+          "pipeline.stages.deploy.spec.execution.steps.ShellScript_1.spec.environmentVariables.test":  ${{ parameters.username }}
         apikey: ${{ parameters.token }}
   output:
     links:

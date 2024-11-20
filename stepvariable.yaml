@@ -1,9 +1,9 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: deploy-demo-service
-  title: Deploy service
-  description: A template to Deploy service
+  name: custom-step-variable
+  title: Step variable
+  description: A template for Step variable
 spec:
   owner: deepesh.kumar@harness.io
   type: service
@@ -30,7 +30,7 @@ spec:
           type: string
   steps:
     - id: trigger
-      name: Run Deploy service
+      name: Resolve Step variable
       action: trigger:harness-custom-pipeline
       input:
         url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/all/orgs/default/projects/Deepesh_CDE/pipelines/Step_variabels/pipeline-studio/?storeType=INLINE

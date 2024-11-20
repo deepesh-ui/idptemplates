@@ -1,0 +1,36 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: test-template
+  title: Test Template
+  description: A template to test
+spec:
+  owner: deepesh.kumar@harness.io
+  type: service
+  parameters:
+    - title: Test Template
+      properties:
+       zone:
+        title: Zone
+        type: string
+        description: Zone
+        ui:field: EntityPicker
+        ui:options:
+          catalogFilter:
+            - kind: Domain
+              metadata.name: non-prod
+            - kind: Domain
+              metadata.name: pre-prod
+            - kind: Domain
+              metadata.name: prod
+            - kind: Domain
+              metadata.name: disaster-recovery
+          enumMap:
+            non-prod: TESTNPD
+            pre-prod: TESTPPD
+            prod: TESTPRD
+            disaster-recovery: TESTDR
+  output:
+    links:
+      - title: Pipeline Details
+        zoneVar: ${{ parameters.zone | ui:options.enumMap }}

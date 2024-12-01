@@ -1,8 +1,8 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: GitSync-demo-variables
-  title: GitSync Variable
+  name: selectfieldfrompai
+  title: selectfieldfrompai
   description: A template to test GitSync variables
 spec:
   owner: deepesh.kumar@harness.io

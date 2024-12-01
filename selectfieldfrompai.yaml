@@ -1,0 +1,38 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: selectfieldfrompai
+  title: selectfieldfrompai
+  description: A template for selectfieldfrompai
+spec:
+  owner: deepesh.kumar@harness.io
+  type: service
+  parameters:
+  - title: Fill in some steps
+    properties:
+      gitusername:
+        title: Github username
+        description: Harness Project Identifier
+        type: string
+      custom:
+        title: GitHub Repos
+        type: string
+        description: Pick one of GitHub Repos
+        ui:field: SelectFieldFromApi
+        ui:options:
+          path: proxy/github-api/users/{{parameters.gitusername}}/repos
+          valueSelector: full_name
+  - title: Fill in some more steps
+    properties:
+      usernameRepo:
+        title: GitHub Repos
+        type: string
+        description: Pick one of GitHub Repos
+        ui:field: SelectFieldFromApi
+        ui:options:
+          path: proxy/github-api/users/{{parameters.gitusername}}/repos
+          valueSelector: full_name          
+  output:
+    links:
+      - title: Pipeline Details
+        url: ${{ steps.trigger.output.PipelineUrl }}

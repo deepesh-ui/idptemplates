@@ -32,6 +32,9 @@ spec:
         ui:options:
           path: proxy/github-api/users/{{parameters.gitusername}}/repos
           valueSelector: full_name          
+  steps:
+    - id: trigger
+      name: Writing the GitSync Variable       
   output:
     links:
       - title: Pipeline Details

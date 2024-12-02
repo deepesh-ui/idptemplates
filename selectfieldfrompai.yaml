@@ -22,6 +22,15 @@ spec:
           ui:options:
             path: proxy/github-api/users/{{parameters.gitusername}}/repos
             valueSelector: full_name
+        customMulti:
+          title: GitHub Repos Multi
+          type: array
+          description: Pick one of GitHub Repos
+          ui:field: SelectFieldFromApi
+          ui:options:
+            label: Multi Select
+            path: proxy/github-api/users/{{parameters.gitusername}}/repos
+            valueSelector: full_name               
     - title: Fill in some more steps
       properties:
         usernameRepo:

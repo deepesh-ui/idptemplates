@@ -19,6 +19,8 @@ spec:
               - production
               - staging
               - development
+          uniqueItems: true
+          ui:widget: checkboxes    
         gitusername:
           title: Github username
           description: Harness Project Identifier

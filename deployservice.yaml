@@ -44,8 +44,6 @@ spec:
         inputset: 
           "username": ${{ parameters.username }}
           "name": ${{ parameters.name }}
-          "pipeline.stages.deploy.variables.version": ${{ parameters.version }}
-          "pipeline.stages.deploy.spec.execution.steps.ShellScript_1.spec.environmentVariables.scriptVar":  ${{ parameters.username }}
         apikey: ${{ parameters.token }}
   output:
     links:

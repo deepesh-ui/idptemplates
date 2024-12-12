@@ -13,6 +13,17 @@ spec:
         - username
         - version
       properties:
+        name:
+          title: Select environments
+          type: array
+          items:
+            type: string
+            enum:
+              - production
+              - staging
+              - development
+          uniqueItems: true
+          ui:widget: checkboxes        
         username:
           title: Username
           type: string

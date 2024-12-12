@@ -10,6 +10,15 @@ spec:
   parameters:
     - title: Fill in some steps
       properties:
+        name:
+          title: Select environments
+          type: array
+          items:
+            type: string
+            enum:
+              - production
+              - staging
+              - development
         gitusername:
           title: Github username
           description: Harness Project Identifier

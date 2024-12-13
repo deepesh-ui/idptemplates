@@ -27,11 +27,9 @@ spec:
         username:
           title: Username
           type: string
-        token:
-          title: Harness Token
+        apiKeySecret:  
+          title: API Key Secret
           type: string
-          ui:widget: password
-          ui:field: HarnessAuthToken
         version:
           title: Version
           type: string
@@ -44,7 +42,6 @@ spec:
         inputset: 
           "username": ${{ parameters.username }}
           "name": ${{ parameters.name }}
-        apikey: ${{ parameters.token }}
   output:
     links:
       - title: Pipeline Details

@@ -19,9 +19,9 @@ spec:
           items:
             type: string
             enum:
-              - production
-              - staging
-              - development
+              - production-env
+              - staging-env
+              - development-env
           uniqueItems: true
           ui:widget: checkboxes        
         username:

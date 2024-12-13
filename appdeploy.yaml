@@ -42,6 +42,7 @@ spec:
         inputset: 
           "username": ${{ parameters.username }}
           "name": ${{ parameters.name }}
+        apiKeySecret: ${{ parameters.apiKeySecret }}  
   output:
     links:
       - title: Pipeline Details

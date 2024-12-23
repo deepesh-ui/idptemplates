@@ -1,0 +1,35 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: token-devspace
+  title: Deploy service using token
+  description: A template to Deploy service
+spec:
+  owner: deepesh.kumar@harness.io
+  type: service
+  parameters:
+    - title: Deploy service
+      required:
+        - username
+      properties:      
+        username:
+          title: Username
+          type: string
+        token:
+          title: Harness Token
+          type: string
+          ui:widget: password
+          ui:field: HarnessAuthToken
+  steps:
+    - id: trigger
+      name: Run Deploy service
+      action: trigger:harness-custom-pipeline
+      input:
+        url: https://laxmiharness.pr2.harness.io/ng/account/6cBjZs_fTWCiRITqFyRrgQ/module/cd/orgs/default/projects/Deepesh/pipelines/TriggerViaIDP/pipeline-studio?storeType=INLINE
+        inputset:
+          "username": ${{ parameters.username }}
+        apiKeySecret: ${{ parameters.token }}
+  output:
+    links:
+      - title: Pipeline Details
+        url: ${{ steps.trigger.output.PipelineUrl }}

@@ -27,7 +27,7 @@ spec:
         inputset:
           "username": ${{ parameters.username }}
            pipeline.variables.data:
-            username: ${{ parameters.username }}
+             username: ${{ parameters.username }}
         apiKeySecret: ${{ parameters.apiKeySecret }}
   output:
     links:

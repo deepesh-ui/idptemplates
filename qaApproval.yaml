@@ -1,7 +1,7 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: QA Approval
+  name: qaapproval
   title: QA Approval
   description: A template to Deploy service
 spec:
@@ -11,18 +11,12 @@ spec:
     - title: Deploy service
       required:
         - username
-        - version
-      properties:       
+      properties:      
         username:
           title: Username
           type: string
-        token:
-          title: Harness Token
-          type: string
-          ui:widget: password
-          ui:field: HarnessAuthToken
-        version:
-          title: Version
+        apiKeySecret:  
+          title: API Key Secret
           type: string
   steps:
     - id: trigger
@@ -30,9 +24,9 @@ spec:
       action: trigger:harness-custom-pipeline
       input:
         url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/module/cd/orgs/default/projects/Deepesh_CDE/pipelines/testApproval/pipeline-studio?storeType=INLINE
-        inputset: 
+        inputset:
           "username": ${{ parameters.username }}
-        apikey: ${{ parameters.token }}
+        apiKeySecret: ${{ parameters.apiKeySecret }}
   output:
     links:
       - title: Pipeline Details

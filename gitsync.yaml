@@ -9,9 +9,6 @@ spec:
   type: service
   parameters:
     - title: Email Content
-      required:
-        - pipeline.variables.username
-        - pipeline.stages.GitsyncStageTemplate.variables.greetings
       properties:
         username:
           title: Username

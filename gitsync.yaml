@@ -13,7 +13,7 @@ spec:
         - pipeline.variables.username
         - pipeline.stages.GitsyncStageTemplate.variables.greetings
       properties:
-        pipeline.variables.username:
+        username:
           title: Username
           type: string
         token:
@@ -37,8 +37,7 @@ spec:
           pipeline.variables.GIT_REPOSITORY_BRANCH: prjct_with_dflt_grps
           pipeline.variables.GIT_REPOSITORY_NAME: https://git.harness.io/HgTKqISVTX-kQSVsWCHEcA/Harness_Platform_Management/tu-harness-template-library.git
           pipeline.variables.RESOURCE_OWNER: group:default/Account_Admins
-          pipeline.variables.RESOURCE_NAME: ${{ parameters.organization_id }}_${{
-            parameters.project_name|replace(" ","-") }}
+          pipeline.variables.RESOURCE_NAME: ${{ parameters.username }}
           pipeline.variables.RESOURCE_VARS:
             harness_platform_account: ${{ parameters.solutions_factory_details.harness_account_id }}
             organization_id: ${{ parameters.organization_id }}

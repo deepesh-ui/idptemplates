@@ -1,8 +1,8 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: selectfieldfrompai
-  title: selectfieldfrompai
+  name: contextupdate 
+  title: Update Form Context
   description: A template to test GitSync variables
 spec:
   owner: deepesh.kumar@harness.io

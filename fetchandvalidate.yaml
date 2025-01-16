@@ -48,7 +48,7 @@ spec:
           title: Default Plan
           description: Harness Project Identifier
           type: string
-        public_repos:
+        publicRepos:
           title: public repos count
           description: Harness Project Identifier
           type: string                 

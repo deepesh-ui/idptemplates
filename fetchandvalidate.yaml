@@ -37,7 +37,7 @@ spec:
             # path: proxy/github-api/orgs/{{parameters.custom}}/repos
             # path: proxy/github-api/users/{{parameters.gitusername}}/repos
             contextData: 
-              username: name
+              username: login
               plan: plan.name
               publicRepos: public_repos
         username:
@@ -51,7 +51,7 @@ spec:
         publicRepos:
           title: public repos count
           description: Harness Project Identifier
-          type: string                 
+          type: number                 
         reponame:
           title: Repo Name
           description: Harness Project Identifier

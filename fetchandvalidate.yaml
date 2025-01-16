@@ -26,7 +26,19 @@ spec:
             contextData: 
               reponame: name
               branch: default_branch
-              type: visibility
+              type: visibility                 
+        reponame:
+          title: Repo Name
+          description: Harness Project Identifier
+          type: string            
+        branch:
+          title: Default Branch
+          description: Harness Project Identifier
+          type: string
+        type:
+          title: Visibility
+          description: Harness Project Identifier
+          type: string     
         userdata:
           title: user detail
           type: string
@@ -34,8 +46,6 @@ spec:
           ui:field: ValidateAndFetch
           ui:options:
             path: proxy/github-api/users/{{parameters.userdata}}
-            # path: proxy/github-api/orgs/{{parameters.custom}}/repos
-            # path: proxy/github-api/users/{{parameters.gitusername}}/repos
             contextData: 
               username: login
               plan: plan.name
@@ -51,19 +61,7 @@ spec:
         publicRepos:
           title: public repos count
           description: Harness Project Identifier
-          type: number                 
-        reponame:
-          title: Repo Name
-          description: Harness Project Identifier
-          type: string            
-        branch:
-          title: Default Branch
-          description: Harness Project Identifier
-          type: string
-        type:
-          title: Visibility
-          description: Harness Project Identifier
-          type: string     
+          type: number          
   steps:
     - id: trigger
       name: Writing the GitSync Variable

@@ -50,7 +50,7 @@ spec:
               loginName: login
               plan: plan.name
               publicRepos: public_repos
-        username:
+        loginName:
           title: User Name
           ui:field: ContextViewer
           ui:options:

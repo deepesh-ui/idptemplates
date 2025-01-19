@@ -47,11 +47,14 @@ spec:
           ui:options:
             path: proxy/github-api/users/{{parameters.gitusername}}
             contextData: 
-              username: login
+              loginName: login
               plan: plan.name
               publicRepos: public_repos
         username:
           title: User Name
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: loginName
           description: Harness Project Identifier
           type: string            
         plan:

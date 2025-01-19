@@ -45,7 +45,7 @@ spec:
           description: Pick one of GitHub Repos
           ui:field: ValidateAndFetch
           ui:options:
-            path: proxy/github-api/users/{{parameters.userdata}}
+            path: proxy/github-api/users/{{parameters.gitusername}}
             contextData: 
               username: login
               plan: plan.name

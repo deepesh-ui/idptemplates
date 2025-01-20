@@ -28,7 +28,7 @@ spec:
         # url: https://laxmiharness.pr2.harness.io/ng/account/6cBjZs_fTWCiRITqFyRrgQ/module/cd/orgs/default/projects/Deepesh/pipelines/TriggerViaIDP/pipeline-studio?storeType=INLINE
         url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/all/orgs/default/projects/idpprojectsc/pipelines/DummyPipeline/pipeline-studio/?repoIdentifier=null&branch=null&storeType=INLINE
         inputset:
-          "username": ${{ parameters.username }}
+          "pipeline.variables.username": ${{ parameters.username }}
         apikey: ${{ parameters.token }}
   output:
     links:

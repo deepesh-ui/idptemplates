@@ -54,7 +54,7 @@ spec:
           title: User Name
           ui:field: ContextViewer
           ui:options:
-            getContextData: {{formcontext.loginName}}
+            getContextData: {{formContext.loginName}}
           description: Harness Project Identifier
           type: string            
         plan:

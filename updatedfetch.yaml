@@ -40,14 +40,14 @@ spec:
           type: string
           ui:field: ContextViewer
           ui:options:
-            getContextData: {{formContext.reponame}}          
+            getContextData: {{formContext.branch}}          
         typeName:
           title: Visibility
           description: Harness Project Identifier
           type: string     
           ui:field: ContextViewer
           ui:options:
-            getContextData: {{formContext.reponame}}          
+            getContextData: {{formContext.type}}          
         userdata:
           title: user detail
           type: string

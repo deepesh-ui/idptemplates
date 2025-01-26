@@ -29,6 +29,7 @@ spec:
               type: visibility                 
         repositoryname:
           title: Repo Name
+          readonly: true
           description: Harness Project Identifier
           type: string            
           ui:field: ContextViewer

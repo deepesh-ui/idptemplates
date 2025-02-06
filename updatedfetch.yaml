@@ -37,6 +37,7 @@ spec:
             getContextData: {{formContext.reponame}}
         branchName:
           title: Default Branch
+          readonly: true
           description: Harness Project Identifier
           type: string
           ui:field: ContextViewer
@@ -44,6 +45,7 @@ spec:
             getContextData: {{formContext.branch}}          
         typeName:
           title: Visibility
+          readonly: true
           description: Harness Project Identifier
           type: string     
           ui:field: ContextViewer
@@ -60,6 +62,10 @@ spec:
               loginName: login
               plan: plan.name
               publicRepos: public_repos
+        entityRefs:
+          title: Entity Refs
+          type: string
+          default: user:default/autouser1
         customvalidate:
           title: GitHub Repos Single
           type: string
@@ -77,25 +83,18 @@ spec:
                 Content-Type: application/json
               body: 
                 entityRefs:
-                - user:default/autouser1
+                - {{parameters.entityRefs}}
                 fields:
                 - kind
                 - metadata.name               
         gitname:
           title: User Name
+          readonly: true
           ui:field: ContextViewer
           ui:options:
             getContextData: {{formContext.loginName}}
           description: Harness Project Identifier
-          type: string            
-        plan:
-          title: Default Plan
-          description: Harness Project Identifier
-          type: string
-        publicRepos:
-          title: public repos count
-          description: Harness Project Identifier
-          type: number          
+          type: string       
   steps:
     - id: trigger
       name: Writing the GitSync Variable

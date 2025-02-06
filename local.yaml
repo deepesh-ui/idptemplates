@@ -23,7 +23,7 @@ spec:
           ui:options:
             path: proxy/github-api/users/{{parameters.gitusername}}/repos
             valueSelector: full_name
-            contextData: 
+            setContextData: 
               reponame: name
               branch: default_branch
               type: visibility                 
@@ -58,7 +58,7 @@ spec:
           ui:field: ValidateAndFetch
           ui:options:
             path: proxy/github-api/users/{{parameters.gitusername}}
-            contextData: 
+            setContextData: 
               loginName: login
               plan: plan.name
               publicRepos: public_repos

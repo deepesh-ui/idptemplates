@@ -15,6 +15,14 @@ spec:
           description: Harness Project Identifier
           type: string
           default: deepesh-ui
+        customOne:
+          title: GitHub Repos getter
+          type: string
+          description: Pick one of GitHub Repos
+          ui:field: SelectFieldFromApi
+          ui:options:
+            path: proxy/github-api/users/{{parameters.gitusername.split('/')[0]}}/repos
+            valueSelector: full_name
         custom:
           title: GitHub Repos
           type: string

@@ -26,14 +26,7 @@ spec:
             setContextData: 
               reponame: name
               branch: default_branch
-              type: visibility                 
-        repositoryname:
-          title: Repo Name
-          description: Harness Project Identifier
-          type: string            
-          ui:field: ContextViewer
-          ui:options:
-            getContextData: {{formContext.reponame}}       
+              type: visibility                    
         typeName:
           title: Visibility
           description: Harness Project Identifier
@@ -47,7 +40,14 @@ spec:
           type: string
           ui:field: ContextViewer
           ui:options:
-            getContextData: {{formContext.branch}}             
+            getContextData: {{formContext.branch}}     
+        repositoryname:
+          title: Repo Name
+          description: Harness Project Identifier
+          type: string            
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: {{formContext.reponame}}                
     - title: Fill in some steps
       properties:            
         repositoryvalue:

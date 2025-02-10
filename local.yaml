@@ -55,7 +55,7 @@ spec:
           type: string            
           ui:field: ContextViewer
           ui:options:
-            getContextData: {{formData.repositoryname}}
+            getContextData: {{formContext.formData.repositoryname}}
         userdata:
           title: user detail
           type: string

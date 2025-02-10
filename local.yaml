@@ -29,7 +29,6 @@ spec:
               type: visibility                 
         repositoryname:
           title: Repo Name
-          readonly: true
           description: Harness Project Identifier
           type: string            
           ui:field: ContextViewer
@@ -37,7 +36,6 @@ spec:
             getContextData: {{formContext.reponame}}
         branchName:
           title: Default Branch
-          readonly: true
           description: Harness Project Identifier
           type: string
           ui:field: ContextViewer
@@ -45,12 +43,19 @@ spec:
             getContextData: {{formContext.branch}}          
         typeName:
           title: Visibility
-          readonly: true
           description: Harness Project Identifier
           type: string     
           ui:field: ContextViewer
           ui:options:
-            getContextData: {{formContext.type}}          
+            getContextData: {{formContext.type}}   
+    - title: Fill in some steps
+      properties:            
+        gitusername:
+          title: Github username
+          description: Harness Project Identifier
+          type: string
+          value: {{parameters.repositoryname}}
+          default: deepesh-ui      
         userdata:
           title: user detail
           type: string

@@ -50,19 +50,18 @@ spec:
             getContextData: {{formContext.type}}   
     - title: Fill in some steps
       properties:            
-        gitusername:
+        contextvalue:
           title: Github username
           description: Harness Project Identifier
           type: string
           value: {{parameters.repositoryname}}
-          default: deepesh-ui      
         userdata:
           title: user detail
           type: string
           description: Pick one of GitHub Repos
           ui:field: ValidateAndFetch
           ui:options:
-            path: proxy/github-api/users/{{parameters.gitusername}}
+            path: proxy/github-api/users/{{parameters.contextvalue}}
             setContextData: 
               loginName: login
               plan: plan.name

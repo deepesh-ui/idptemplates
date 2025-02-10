@@ -51,8 +51,7 @@ spec:
     - title: Fill in some steps
       properties:            
         contextvalue:
-          title: Github username
-          description: Harness Project Identifier
+          title: Context Value
           type: string
           value: {{parameters.repositoryname}}
         userdata:

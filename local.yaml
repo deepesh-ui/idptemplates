@@ -40,16 +40,16 @@ spec:
           type: string     
           ui:field: ContextViewer
           ui:options:
-            getContextData: {{formContext.type}}   
+            getContextData: {{formContext.type}}                   
+    - title: Fill in some steps
+      properties:            
         branchName:
           title: Default Branch
           description: Harness Project Identifier
           type: string
           ui:field: ContextViewer
           ui:options:
-            getContextData: {{formContext.branch}}                   
-    - title: Fill in some steps
-      properties:            
+            getContextData: {{formContext.branch}}         
         repositoryvalue:
           title: Repo Value from context
           type: string            

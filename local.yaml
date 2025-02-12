@@ -40,7 +40,7 @@ spec:
           type: string            
           ui:field: ContextViewer
           ui:options:
-            getContextData: "{{formContext.reponame.capitalize()}}"            
+            getContextData: "{{formContext.reponame}}"            
         typeName:
           title: Visibility
           description: Harness Project Identifier

@@ -33,7 +33,14 @@ spec:
           type: string            
           ui:field: ContextViewer
           ui:options:
-            getContextData: {{formContext.reponame}}                
+            getContextData: {{formContext.reponame}}      
+        repositorynameCapital:
+          title: Repo Name
+          description: Harness Project Identifier
+          type: string            
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: "{{formContext.reponame.capitalize()}}"            
         typeName:
           title: Visibility
           description: Harness Project Identifier

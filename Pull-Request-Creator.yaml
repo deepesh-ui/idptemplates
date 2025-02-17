@@ -28,7 +28,6 @@ spec:
               type: visibility                 
         repositoryname:
           title: Repository Name
-          readonly: true
           description: Check your Repository Name
           type: string            
           ui:field: ContextViewer
@@ -36,7 +35,6 @@ spec:
             getContextData: {{ formContext.reponame }}
         branchName:
           title: Default Branch
-          readonly: true
           description: Default Branch
           type: string
           ui:field: ContextViewer
@@ -44,7 +42,6 @@ spec:
             getContextData: {{ formContext.branch }}          
         typeName:
           title: Visibility
-          readonly: true
           description: Repository Visibility
           type: string     
           ui:field: ContextViewer

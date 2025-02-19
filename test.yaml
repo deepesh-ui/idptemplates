@@ -3,7 +3,7 @@ kind: Template
 metadata:
   name: test-template
   title: Test Template
-  description: A template to test
+  description: A template to Deploy service
 spec:
   owner: deepesh.kumar@harness.io
   type: service
@@ -38,7 +38,16 @@ spec:
         name:
           type: string
           default: user
+  steps:
+    - id: trigger
+      name: Run Deploy service
+      action: trigger:harness-custom-pipeline
+      input:
+        url: https://localhost:8181/ng/account/zEaak-FLS425IEO7OLzMUg/module/cd/orgs/default/projects/Deepesh_CDE/pipelines/Idptemplate/pipeline-studio?storeType=INLINE
+        inputset:
+          "username": ${{ parameters.username }}
+        apiKeySecret: ${{ parameters.apiKeySecret }}
   output:
     links:
       - title: Pipeline Details
-        zoneVar: ${{ parameters.zone | ui:options.enumMap }}
+        url: ${{ steps.trigger.output.PipelineUrl }}        

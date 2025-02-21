@@ -16,6 +16,8 @@ spec:
         username:
           title: Username
           type: string
+          ui:widget: password
+          ui:field: Secret
         harness_project:
           title: Name of your harness project
           type: string

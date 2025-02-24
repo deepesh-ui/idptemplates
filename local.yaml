@@ -28,6 +28,7 @@ spec:
               branch: default_branch
               type: visibility    
               fullName: full_name
+              owner: owner.login
         dump:
           title: Dump
           description: DEBUG Context

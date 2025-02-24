@@ -27,7 +27,7 @@ spec:
               reponame: name
               branch: default_branch
               type: visibility    
-              license: license.url
+              fullName: full_name
         dump:
           title: Dump
           description: DEBUG Context
@@ -41,7 +41,7 @@ spec:
           type: string            
           ui:field: ContextViewer
           ui:options:
-            getContextData: "{{formContext.license.split('/)[4]}}"     
+            getContextData: "{{formContext.fullName.split('/)[0]}}"     
         repositoryname:
           title: Repo Name
           description: Harness Project Identifier

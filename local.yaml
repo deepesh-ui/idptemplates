@@ -131,11 +131,13 @@ spec:
       input:
         url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/module/idp-admin/orgs/default/projects/idpprojectsc/pipelines/DummyPipeline/pipeline-studio/?storeType=INLINE&stageId=DummyStage&sectionId=EXECUTION
         inputset: 
-          "username": ${{ parameters.username }}
-          "name": ${{ parameters.name }}
+          "username": ${{ parameters.gitusername }}
+          "name": ${{ parameters.gitusername }}
+          "formContext": ${{ parameters.formContext }}
           "pipeline.stages.GitsyncStageTemplate.variables.greetings": ${{ parameters['pipeline.stages.GitsyncStageTemplate.variables.greetings'] }}
         apiKeySecret: "SecretKeyString"
         enableVariableMapping: true
+        formContext: ${{ parameters.formContext }}
   output:
     links:
       - title: Pipeline Details

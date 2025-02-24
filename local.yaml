@@ -28,6 +28,7 @@ spec:
               branch: default_branch
               type: visibility    
               fullName: full_name
+              filteredName: "{{full_name.split('/')[0]}}"
               owner: owner.login
         dump:
           title: Dump

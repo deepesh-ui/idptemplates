@@ -41,7 +41,7 @@ spec:
           type: string            
           ui:field: ContextViewer
           ui:options:
-            getContextData: "{{formContext.fullName.split('/)[0]}}"     
+            getContextData: "{{formContext.fullName.split('/')[0]}}"     
         repositoryname:
           title: Repo Name
           description: Harness Project Identifier

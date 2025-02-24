@@ -26,7 +26,8 @@ spec:
             setContextData: 
               reponame: name
               branch: default_branch
-              type: visibility     
+              type: visibility    
+              license: license.url
         dump:
           title: Dump
           description: DEBUG Context
@@ -34,6 +35,13 @@ spec:
           ui:field: ContextViewer
           ui:options:
             getContextData: {{formContext}} 
+        license:
+          title: Repo Name
+          description: Harness Project Identifier
+          type: string            
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: "{{formContext.license.split('/)[4]}}"     
         repositoryname:
           title: Repo Name
           description: Harness Project Identifier

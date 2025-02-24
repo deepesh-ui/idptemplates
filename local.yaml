@@ -135,6 +135,7 @@ spec:
           "name": ${{ parameters.name }}
           "pipeline.stages.GitsyncStageTemplate.variables.greetings": ${{ parameters['pipeline.stages.GitsyncStageTemplate.variables.greetings'] }}
         apikey: ${{ parameters.token }}
+        apiKeySecret: SecretKeyString
         enableVariableMapping: true
   output:
     links:

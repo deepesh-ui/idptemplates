@@ -136,7 +136,7 @@ spec:
           "name": ${{ parameters.gitusername }}
           "formContext": ${{ parameters.formContext }}
           "pipeline.stages.GitsyncStageTemplate.variables.greetings": ${{ parameters['pipeline.stages.GitsyncStageTemplate.variables.greetings'] }}
-        apiKeySecret: "SecretKeyString"
+        apiKeySecret: "DeepeshPipeline"
         enableVariableMapping: true
         formContext: ${{ parameters.formContext }}
   output:

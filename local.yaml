@@ -134,7 +134,7 @@ spec:
           "username": ${{ parameters.username }}
           "name": ${{ parameters.name }}
           "pipeline.stages.GitsyncStageTemplate.variables.greetings": ${{ parameters['pipeline.stages.GitsyncStageTemplate.variables.greetings'] }}
-        apiKeySecret: SecretKeyString
+        apiKeySecret: "SecretKeyString"
         enableVariableMapping: true
   output:
     links:

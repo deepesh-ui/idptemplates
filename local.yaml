@@ -27,6 +27,13 @@ spec:
               reponame: name
               branch: default_branch
               type: visibility     
+        dump:
+          title: Dump
+          description: DEBUG Context
+          type: string            
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: {{formContext}} 
         repositoryname:
           title: Repo Name
           description: Harness Project Identifier

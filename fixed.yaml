@@ -23,6 +23,7 @@ spec:
           ui:options:
             path: proxy/github-api/users/{{parameters.gitusername}}/repos
             valueSelector: full_name
+            allowArbitraryValues: true
         customTwo:
           title: GitHub Repos
           type: string
@@ -32,6 +33,7 @@ spec:
             path: proxy/github-api/users/{{parameters.gitusername}}/repos
             valueSelector: full_name
             labelSelector: id
+            allowArbitraryValues: true
         customMulti:
           title: GitHub Repos Multi
           type: array
@@ -42,6 +44,7 @@ spec:
             path: proxy/github-api/users/{{parameters.gitusername}}/repos
             valueSelector: full_name  
             labelSelector: id      
+            allowArbitraryValues: true
             minItems: 1
             maxItems: 2
         customMultiLable:
@@ -53,7 +56,8 @@ spec:
             label: Multi Select
             path: proxy/github-api/users/{{parameters.gitusername}}/repos
             valueSelector: id  
-            labelSelector: name      
+            labelSelector: name     
+            allowArbitraryValues: true
         custom:
           type: string
           # Use `SelectFieldFromApi` to configure the select field for the entry.
@@ -79,6 +83,7 @@ spec:
             valueSelector: 'count'
             # (Optional) This selects the field in the array to use for the label of each select item.
             labelSelector: 'value'       
+            allowArbitraryValues: true
   steps:
     - id: trigger
       name: Writing the GitSync Variable

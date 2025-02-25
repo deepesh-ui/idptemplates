@@ -95,6 +95,16 @@ spec:
           title: Entity Refs
           type: string
           default: user:default/autouser1
+        ownerdata:
+          title: Owner
+          type: string
+          description: Owner of the component
+          ui:field: ValidateAndFetch
+          ui:options:
+            setContext: "facets.kind[0]"
+            path: 'catalog/entity-facets'
+            params:
+             facet: 'kind'          
         customvalidate:
           title: GitHub Repos Single
           type: string

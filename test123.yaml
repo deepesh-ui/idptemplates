@@ -9,20 +9,28 @@ spec:
   type: service
   parameters:
     - title: Test Template
-      properties:
-       name:
-         title: Name
+      properties:   
+       uid:
          type: string
-         description: Unique name of the component
          ui:field: SelectFieldFromApi
          ui:options:
            placeholder: Select titles
-           path: proxy/harness-idp-api/ow3wOLKoQASF8ih6yBsvAw/idp/api/catalog/entities/by-uid/15c0feb8-f284-4cf7-b1d0-6eba2c258097
-           arraySelector: .
-           valueSelector: metadata.name
+           path: catalog/entities
+           valueSelector: metadata.uid
+           labelSelector: metadata.name
+           allowArbitraryValues: false          
+      title:
+         type: string
+         ui:field: SelectFieldFromApi
+         ui:options:
+           placeholder: Select titles
+           path: catalog/entities/by-uid/{{parameters.uid}}
+           arraySelector: metadata.links
+           valueSelector: title
+           allowArbitraryValues: false             
            setContextData:
              uid: metadata.uid
-             account: metadata.aws_account    
+             account: metadata.aws_account  
        formContext:
          title: Live Form Context
          description: DEBUG Context
@@ -30,34 +38,6 @@ spec:
          ui:field: ContextViewer
          ui:options:
           getContextData: {{formContext}}
-       repositoryname:
-         type: string
-         ui:field: SelectFieldFromApi
-         ui:options:
-           title: Select the Name of the repository where your application's source code is stored from the Dropdown List
-           description: Enter the Name of the repository where your application's source code is stored
-           allowArbitraryValues: true
-           path: "proxy/github-repo-search/search/repositories"
-           params:
-             q: "org:United-Airlines-Org {{parameters.searchTerm}}"
-             per_page: "100"
-           arraySelector: items
-           valueSelector: name
-           labelSelector: name
-       gittag:
-         type: string
-         ui:field: SelectFieldFromApi
-         ui:options:
-           title: Select the Git Tag for your application
-           description: Choose the specific tag from the selected repository for compilation and build - CI.
-           path: proxy/github-repo-search/repos/United-Airlines-Org/{{parameters.repositoryname}}/tags
-           valueSelector: name
-           labelSelector: name
-    - title: Test Template 1
-      properties:
-        name:
-          type: string
-          default: user
   steps:
     - id: trigger
       name: Run Deploy service

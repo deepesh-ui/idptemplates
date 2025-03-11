@@ -9,38 +9,35 @@ spec:
   type: service
   parameters:
     - title: Test Template
-      properties:
-        uid:
-          type: string
-          ui:
-            field: SelectFieldFromApi
-            options:
-              placeholder: Select titles
-              path: catalog/entities
-              valueSelector: metadata.uid
-              labelSelector: metadata.name
-              allowArbitraryValues: false
-        title:
-          type: string
-          ui:
-            field: SelectFieldFromApi
-            options:
-              placeholder: Select titles
-              path: catalog/entities/by-uid/{{parameters.uid}}
-              arraySelector: metadata.links
-              valueSelector: title
-              allowArbitraryValues: false
-              setContextData:
-                uid: metadata.uid
-                account: metadata.aws_account
-        formContext:
-          title: Live Form Context
-          description: DEBUG Context
-          type: string
-          ui:
-            field: ContextViewer
-            options:
-              getContextData: {{formContext}}
+      properties:   
+         uid:
+           type: string
+           ui:field: SelectFieldFromApi
+           ui:options:
+             placeholder: Select titles
+             path: catalog/entities
+             valueSelector: metadata.uid
+             labelSelector: metadata.name
+             allowArbitraryValues: false          
+        detail:
+           type: string
+           ui:field: SelectFieldFromApi
+           ui:options:
+             placeholder: Select titles
+             path: catalog/entities/by-uid/{{parameters.uid}}
+             arraySelector: metadata.links
+             valueSelector: title
+             allowArbitraryValues: false             
+             setContextData:
+               uid: metadata.uid
+               account: metadata.aws_account  
+         formContext:
+           title: Live Form Context
+           description: DEBUG Context
+           type: string
+           ui:field: ContextViewer
+           ui:options:
+            getContextData: {{formContext}}
   steps:
     - id: trigger
       name: Run Deploy service
@@ -48,9 +45,9 @@ spec:
       input:
         url: https://localhost:8181/ng/account/zEaak-FLS425IEO7OLzMUg/module/cd/orgs/default/projects/Deepesh_CDE/pipelines/Idptemplate/pipeline-studio?storeType=INLINE
         inputset:
-          username: ${{ parameters.username }}
+          "username": ${{ parameters.username }}
         apiKeySecret: ${{ parameters.apiKeySecret }}
   output:
     links:
       - title: Pipeline Details
-        url: ${{ steps.trigger.output.PipelineUrl }}
+        url: ${{ steps.trigger.output.PipelineUrl }}        

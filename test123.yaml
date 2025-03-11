@@ -17,12 +17,19 @@ spec:
          ui:field: SelectFieldFromApi
          ui:options:
            placeholder: Select titles
-           path: proxy/harness-idp-api/ow3wOLKoQASF8ih6yBsvAw/idp/api/catalog/entities/by-uid/a4c60fa0-e642-4d48-be79-4710b1cc44f9
+           path: proxy/harness-idp-api/ow3wOLKoQASF8ih6yBsvAw/idp/api/catalog/entities/by-uid/15c0feb8-f284-4cf7-b1d0-6eba2c258097
            arraySelector: .
            valueSelector: metadata.name
            setContextData:
              uid: metadata.uid
-             account: metadata.aws_account              
+             account: metadata.aws_account    
+       formContext:
+         title: Live Form Context
+         description: DEBUG Context
+         type: string
+         ui:field: ContextViewer
+         ui:options:
+          getContextData: {{formContext}}
        repositoryname:
          type: string
          ui:field: SelectFieldFromApi

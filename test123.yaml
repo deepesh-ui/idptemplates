@@ -25,12 +25,12 @@ spec:
            ui:options:
              placeholder: Select titles
              path: catalog/entities/by-uid/{{parameters.uid}}
-             arraySelector: metadata.relations
+             arraySelector: relations
              valueSelector: targetRef
              allowArbitraryValues: false             
              setContextData:
                uid: targetRef
-               account: metadata
+               account: target.name
          formContext:
            title: Live Form Context
            description: DEBUG Context

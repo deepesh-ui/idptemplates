@@ -29,8 +29,8 @@ spec:
              valueSelector: targetRef
              allowArbitraryValues: false             
              setContextData:
-               uid: metadata.uid
-               account: metadata.aws_account  
+               uid: targetRef
+               account: metadata
          formContext:
            title: Live Form Context
            description: DEBUG Context

@@ -25,8 +25,8 @@ spec:
            ui:options:
              placeholder: Select titles
              path: catalog/entities/by-uid/{{parameters.uid}}
-             arraySelector: metadata.links
-             valueSelector: title
+             arraySelector: metadata.relations
+             valueSelector: targetRef
              allowArbitraryValues: false             
              setContextData:
                uid: metadata.uid

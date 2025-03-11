@@ -19,7 +19,7 @@ spec:
              valueSelector: metadata.uid
              labelSelector: metadata.name
              allowArbitraryValues: false          
-        detail:
+         detail:
            type: string
            ui:field: SelectFieldFromApi
            ui:options:

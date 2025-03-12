@@ -27,11 +27,6 @@ spec:
            valueSelector: metadata.uid
            labelSelector: metadata.name
            allowArbitraryValues: false    
-           setContextData:
-             component_name: metadata.name
-             component_uid: metadata.uid 
-             component_title: metadata.title   
-             metadata: metadata
         detail2:
          type: string
          ui:field: SelectFieldFromApi

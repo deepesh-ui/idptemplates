@@ -1,8 +1,8 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: lp-demo
-  title: lp-demo
+  name: deep-demo
+  title: deep-demo
   description: api-demo
 spec:
   owner: DCP

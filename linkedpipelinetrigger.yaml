@@ -27,7 +27,7 @@ spec:
       name: Resolve Step variable
       action: trigger:harness-custom-pipeline
       input:
-        url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/all/orgs/default/projects/Deepesh_CDE/pipelines/Step_variabels/pipeline-studio/?storeType=INLINE
+        url: https://app.harness.io/ng/account/vpCkHKsDSxK9_KYfjCTMKA/module/cd/orgs/default/projects/IDP_UI/pipelines/deepesh_test/pipeline-studio/?storeType=INLINE
         inputset:
           "pipeline.stages.logger.variables.logVariable": ${{ parameters.usernameStage }}
         apikey: ${{ parameters.token }}

@@ -1,0 +1,37 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: linkedpipelinetrigger
+  title: linked pipeline trigger
+  description: A template for linked pipeline trigger
+spec:
+  owner: deepesh.kumar@harness.io
+  type: service
+  parameters:
+    - title: Step Variable
+      required:
+        - usernamePipeline
+        - usernameStage
+        - usernameStep
+      properties:
+        usernamePipeline:
+          title: Username
+          type: string
+        token:
+          title: Harness Token
+          type: string
+          ui:widget: password
+          ui:field: HarnessAuthToken
+  steps:
+    - id: trigger
+      name: Resolve Step variable
+      action: trigger:harness-custom-pipeline
+      input:
+        url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/all/orgs/default/projects/Deepesh_CDE/pipelines/Step_variabels/pipeline-studio/?storeType=INLINE
+        inputset:
+          "pipeline.stages.logger.variables.logVariable": ${{ parameters.usernameStage }}
+        apikey: ${{ parameters.token }}
+  output:
+    links:
+      - title: Pipeline Details
+        url: ${{ steps.trigger.output.PipelineUrl }}

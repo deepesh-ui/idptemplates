@@ -11,8 +11,6 @@ spec:
     - title: Step Variable
       required:
         - usernamePipeline
-        - usernameStage
-        - usernameStep
       properties:
         usernamePipeline:
           title: Username

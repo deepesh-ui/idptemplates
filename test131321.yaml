@@ -1,54 +1,60 @@
-# Edit the template parameters below to see how they will render in the scaffolder form UI
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: Infra-Pipeline-TF-community-module
-  title: Infra Pipeline TF community module
-  description: Automated workflow that provides self service capabilities to provision pipeline with standardized harness template.
-  tags:
-    - hidden
+  name: abcdef
+  title: ABCDEF
+  description: A template to Deploy service
 spec:
-  title: Harness Infra Pipeline Provisioner
-  owner: UAL_Harness_IDP_PlatformEngineer_DGG
+  owner: deepesh.kumar@harness.io
   type: service
   parameters:
-  - title: Fill in some steps
-# Edit the template parameters below to see how they will render in the scaffolder form UI
-parameters:
-  - title: Fill in some steps
-    required:
-      - name
-    properties:
-      name1:
-        title: placeholder Test
-        type: string
-        description: Unique name of the component
-        ui:placeholder: Sample S3 bucket Name: enz-bucket-name-useast2-dev
-      readonlyTest:
-        title: Readonly Test
-        type: string
-        description: Unique name of the component
-        default: muni
-        ui:readonly: true
-      encryptionTypes:
-        title: S3 Encryption Types (Existing Key)
-        type: boolean
-        oneOf:
-          - title: Existing Key
-            const: true
-          - title: New Key
-            const: false
-        ui:widget: radio
-        default: true
-steps:
-  - id: fetch-base
-    name: Fetch Base
-    action: fetch:template
-    input:
-      url: ./template
-      values:
-        name: ${{parameters.name}}
-output:
+    - title: Deploy service
+      properties:
+        name1:
+          title: placeholder Test
+          type: string
+          description: Unique name of the component
+          ui:options:
+            placeholder: Sample S3 bucket Name: enz-bucket-name-useast2-dev
+        readonlyTest:
+          title: Readonly Test
+          type: string
+          description: Unique name of the component
+          default: muni
+          ui:readonly: true      
+        encryptionTypes:
+          title: S3 Encryption Types (Existing Key)
+          type: boolean
+          oneOf:
+            - title: Existing Key
+              const: true
+            - title: New Key
+              const: false
+          ui:widget: radio
+          default: true          
+        username:
+          title: Username
+          type: string
+        version:
+          title: Version
+          type: string
+        apiKeySecret:  
+          title: API Key Secret
+          type: string
+           
+  steps:
+    - id: trigger
+      name: Run Deploy service
+      action: trigger:harness-custom-pipeline
+      input:
+        url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/all/orgs/default/projects/Deepesh_CDE/pipelines/Idptemplate/pipeline-studio/?storeType=INLINE
+        inputset: 
+          "name": ${{ parameters.name }}
+          "username": ${{ parameters.username }}
+          "pipeline.stages.deploy.variables.version": ${{ parameters.version }}
+          "pipeline.stages.deploy.spec.execution.steps.ShellScript_1.spec.environmentVariables.scriptVar":  ${{ parameters.username }}
+        apiKeySecret: ${{ parameters.apiKeySecret }}
+  output:
     links:
       - title: Pipeline Details
         url: ${{ steps.trigger.output.PipelineUrl }}

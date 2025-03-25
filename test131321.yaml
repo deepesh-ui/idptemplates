@@ -24,7 +24,7 @@ parameters:
         type: string
         description: Unique name of the component
         ui:options:
-          ui:placeholder: Sample S3 bucket Name: enz-bucket-name-useast2-dev
+          placeholder: Sample S3 bucket Name: enz-bucket-name-useast2-dev
       readonlyTest:
         title: Readonly Test
         type: string

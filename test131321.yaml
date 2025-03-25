@@ -13,6 +13,11 @@ spec:
   type: service
   parameters:
   - title: Fill in some steps
+# Edit the template parameters below to see how they will render in the scaffolder form UI
+parameters:
+  - title: Fill in some steps
+    required:
+      - name
     properties:
       name1:
         title: placeholder Test
@@ -20,14 +25,12 @@ spec:
         description: Unique name of the component
         ui:options:
           ui:placeholder: Sample S3 bucket Name: enz-bucket-name-useast2-dev
-
       readonlyTest:
         title: Readonly Test
         type: string
         description: Unique name of the component
         default: muni
         ui:readonly: true
-
       encryptionTypes:
         title: S3 Encryption Types (Existing Key)
         type: boolean
@@ -38,36 +41,15 @@ spec:
             const: false
         ui:widget: radio
         default: true
-  steps:
-    - id: trigger
-      name: Creating Standardized Harness CI Pipeline For the Stack You Selected.
-      action: trigger:harness-custom-pipeline
-      input:
-        url: https://app.harness.io/ng/
-        
-        hidePipelineURLLog: false
-        inputset:
-          appCI: ${{ parameters.projectId | dump }}
-          techarea: ${{ parameters.techarea | dump }}
-          techstack: ${{ parameters.techstack | dump }}
-          S3props: ${{ parameters.S3 | dump }}
-          DBprops: ${{ parameters.DynamoDB | dump }}
-          Kinesisprops: ${{ parameters.Kinesis | dump }}
-          SQSprops: ${{ parameters.SQS | dump }}
-          SecretsManagerprops: ${{ parameters.SecretsManager | dump }}
-          SNSprops: ${{ parameters.SNS | dump }}
-          Lambdaprops: ${{ parameters.Lambda | dump }}
-          AppSyncprops: ${{ parameters.AppSync | dump }}
-          containerPlatform: ${{ parameters.containerPlatform | dump }}
-          appinfo: ${{ parameters.appinfo | dump }}
-          primaryRegion: ${{ parameters.primaryRegion | dump }}
-          featureBranch: ${{ parameters.featureBranch | dump }}
-          accountType: ${{ parameters.accountType | dump }}
-          target_group_config: ${{ parameters.target_group_config | dump }}
-        apikey: ${{ parameters.token }}
-        showOutputVariables: true
-
-  output:
+steps:
+  - id: fetch-base
+    name: Fetch Base
+    action: fetch:template
+    input:
+      url: ./template
+      values:
+        name: ${{parameters.name}}
+output:
     links:
       - title: Pipeline Details
         url: ${{ steps.trigger.output.PipelineUrl }}

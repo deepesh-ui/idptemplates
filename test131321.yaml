@@ -1,0 +1,1404 @@
+# Edit the template parameters below to see how they will render in the scaffolder form UI
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: Infra-Pipeline-TF-community-module
+  title: Infra Pipeline TF community module
+  description: Automated workflow that provides self service capabilities to provision pipeline with standardized harness template.
+  tags:
+    - hidden
+spec:
+  title: Harness Infra Pipeline Provisioner
+  owner: UAL_Harness_IDP_PlatformEngineer_DGG
+  type: service
+  parameters:
+    - title: Fill in some steps
+      ui:order:
+        - multipleChoicesList
+        - s3AttributesValues
+        - dbAttributesValues
+  
+      properties:
+        multipleChoicesList:
+          type: array
+          title: A multiple choices list
+          items:
+            type: string
+            enum:
+              - S3
+              - DynamoDB
+          uniqueItems: true
+  
+      dependencies:
+        multipleChoicesList:
+          allOf:
+            - if:
+                properties:
+                  multipleChoicesList:
+                    contains:
+                      const: S3
+              then:
+                properties:
+                  s3AttributesValues:
+                    type: array
+                    title: S3 Attributes                    
+                    items:
+                      $ref: '#/attributes/s3'
+                      ui:order:
+                        - bucketName
+                        - region
+                        - versioning
+                        - lifecycleRule
+                        - lifecycleRuleValues
+                        - logging
+                        - loggingValues
+                        - blockPublicAcls
+                        - blockPublicPolicy
+                        - ignorePublicAcls
+                        - restrictPublicBuckets
+                        - attachPolicy
+                        - forceDestroy
+                        - encryptionTypes
+                        - kmsKeyArn
+                        - markdown
+                        - keyDescription
+                        - keyUsage
+                        - customerMasterKeySpec
+                        - createNewEncrytionKey
+                        - objectOwnership
+                        - tags
+                        - advancedProperties
+  
+            - if:
+                properties:
+                  multipleChoicesList:
+                    contains:
+                      const: DynamoDB
+              then:
+                properties:
+                  dbAttributesValues:
+                    type: array
+                    title: DynamoDB Attributes
+                    items:
+                      $ref: '#/attributes/dynamodb'
+                      
+  
+      attributes:
+        s3:
+          type: object       
+          properties:
+            bucketName:
+              type: string
+              title: Name of the bucket
+              description: Every S3 bucket must have a unique name.  The example format is <AppCI>-bucket-**Name**-<region>-<env>   
+              ui:options:
+              ui:placeholder:  Sample S3 bucket Name: enz-bucket-Name-useast2-dev
+
+            region:
+              type: string
+              title: Region
+              description: Required for specifying the AWS region where the bucket is created
+              enum:
+                - us-east-1
+                - us-east-2
+              default: us-east-1
+            versioning:
+              type: string
+              title: Versioning
+              description: Frequently enabled to maintain object history
+              enum:
+                - Enabled
+                - Disabled
+              default: Enabled
+            lifecycleRule:
+              type: boolean
+              title: Lifecycle Rule
+              description: Commonly used to manage object lifecycle policies
+              ui:widget: checkbox
+            logging:
+              type: string
+              title: Logging
+              description: Frequently enabled for security and access tracking
+              enum:
+                - yes
+                - no 
+              default: no                       
+            blockPublicAcls:
+              type: boolean
+              title: Block Public Acls
+              description: Essential for security to prevent public ACLs 
+              enum:
+                - true
+                - false                        
+              default: true
+            blockPublicPolicy:
+              type: boolean
+              title: Block Public Policy
+              description: Commonly required for compliance and security best practices
+              enum:
+                - true
+                - false                        
+              default: true
+            ignorePublicAcls: 
+              type: boolean
+              title: Ignore Public Acls
+              description: Used in conjunction with block_public_acls for enhanced security
+              enum:
+                - true
+                - false                        
+              default: true
+            restrictPublicBuckets: 
+              type: boolean
+              title: Restrict Public Buckets
+              description: Ensures public policies are restricted
+              enum:
+                - true
+                - false                        
+              default: true
+            attachPolicy:
+              type: boolean
+              title: Attach Policy
+              description: Required to attach bucket policies for IAM-based access control
+              enum:
+                - true
+                - false                        
+              default: true
+            forceDestroy:
+              type: boolean
+              title: Force Destroy
+              description: Controls whether Terraform can destroy the bucket if it contains objects
+              enum:
+                - true
+                - false                        
+              default: true          
+            
+            encryptionTypes:
+              title: S3 Encryption Types (Existing Key)
+              type: boolean
+              oneOf:
+                - title: Existing Key
+                  const: true
+                - title: New Key
+                  const: false
+              ui:widget: radio
+              default: true
+
+            objectOwnership:
+              type: string
+              title: Object Ownership
+              description: Important for ACL deprecation; enforces policy-based access
+              enum:
+                - BucketOwnerPreferred
+                - BucketOwnerEnforced
+                - ObjectWriter
+              default: BucketOwnerEnforced
+          #  tags:
+          #    type: string
+          #    title: Tags
+          #    description: Used for cost allocation, tracking, and governance
+          #    default: "{}" 
+            tags:
+              title: Tags
+              type: object        
+              description: Used for cost allocation, tracking, and governance
+              additionalProperties:
+                type: string         
+            advancedProperties:
+              type: array
+              title: Advanced Properties
+              maxItems: 1
+              items:
+                 $ref: '#/attributes/s3advanceproperties'
+
+          dependencies:           
+            encryptionTypes:
+              allOf:
+                - if:
+                    properties:
+                      encryptionTypes:
+                          const: true
+                  then:
+                    properties:
+                      kmsKeyArn:
+                        type: string
+                        title: KMS Key ARN
+                        description: KMS Key ARN for existing Key
+                        default: "arn:aws:kms:us-east-1:123456789012:key/example-key-id"
+                
+                - if:
+                    properties:
+                      encryptionTypes:
+                          const: false
+                  then:
+                    properties:                    
+                      markdown:
+                        type: 'null' # Needs to be quoted
+                        description: |
+                          ## Create New KMS Encrytion Key
+                  
+                      keyDescription:
+                        type: string
+                        title: Description of the Key
+                        description:  The description of the key as viewed in AWS console.   
+                        ui:options:
+                        ui:placeholder: |
+                          Description of the key
+                      keyUsage:
+                        type: string
+                        title: Key Usage
+                        description: Specifies the intended use of the key
+                        enum:
+                          - ENCRYPT_DECRYPT
+                          - SIGN_VERIFY
+                        default: ENCRYPT_DECRYPT
+                      customerMasterKeySpec:
+                        type: string
+                        title: Customer Master Key Spec
+                        description: Specifies whether the key contains a symmetric key or an asymmetric key pair and the encryption algorithms or signing algorithms that the key supports
+                        enum:
+                          - SYMMETRIC_DEFAULT
+                          - RSA_2048
+                          - RSA_3072
+                          - RSA_4096
+                          - ECC_NIST_P256
+                          - ECC_NIST_P384
+                          - ECC_NIST_P521
+                          - ECC_SECG_P256K1
+                        default: SYMMETRIC_DEFAULT
+                      createNewEncrytionKey:
+                        title: Additional Properties for Create New KMS Encrytion Key
+                        type: array
+                        maxItems: 1
+                        items:
+                          $ref: '#/attributes/createEncrytionKey'
+                          ui:order:   
+                            - array 
+                            - someInput  
+                            - flag
+            
+            logging:
+              allOf:
+                - if:
+                    properties:
+                      logging:
+                          const: yes
+                  then:
+                    properties:
+                      loggingValues:
+                        type: string
+                        title: Logging
+                        description: Frequently enabled for security and access tracking
+                        enum:
+                          - bucket
+                          - target_bucket
+                          - target_prefix
+                      
+            lifecycleRule:
+              allOf:
+                - if:
+                    properties:
+                      lifecycleRule:
+                          const: true
+                  then:
+                    properties:
+                      lifecycleRuleValues:
+                        type: array
+                        title: Lifecycle Rule Attributes
+                        items:
+                          $ref: '#/attributes/lifecycleRules'
+                          ui:order:   
+                            - transitionDays 
+                            - storageClass
+
+        createEncrytionKey:
+          type: object
+          properties:
+            array:
+              title: Array string with default value
+              type: string
+              default: value3
+              enum:
+                - value1
+                - value2
+                - value3
+            flag:
+              title: Boolean flag
+              type: boolean
+              ui:widget: radio
+            someInput:
+              title: Simple text input
+              type: string
+
+
+        lifecycleRules:
+          type: object
+          properties:
+            lifecycleRulesID:
+              type: string
+              title: Lifecycle Rules ID
+              description: Lifecycle Rules ID
+              default: archive
+              ui:readonly: true
+              
+            transitionDays:
+              type: string
+              title: Transition Days
+              description: Lifecycle Rules
+              enum:
+                - "30"
+                - "60"
+              default: "30"
+            storageClass:
+              type: string
+              title: Storage Class
+              description: Storage Class
+              enum:
+                - STANDARD_IA
+                - GLACIER
+              default: STANDARD_IA
+        
+        s3advanceproperties:
+          type: object
+          properties:
+            accelerationStatus:
+              type: string
+              title: Acceleration Status
+              description: Sets the accelerate configuration of an existing bucket. Can be Enabled or Suspended
+              default: "Suspended"
+            accessLogDeliveryPolicySourceAccounts:
+              type: array
+              title: Access Log Delivery Policy Source Accounts
+              items:
+                type: string
+              description: List of AWS Account IDs should be allowed to deliver access logs to this bucket
+              default: []
+            accessLogDeliveryPolicySourceBuckets:
+              type: array
+              title: Access Log Delivery Policy Source Buckets
+              items:
+                type: string
+              description: List of S3 bucket ARNs which should be allowed to deliver access logs to this bucket
+              default: []
+            account:
+              type: string
+              title: Account
+              description: Current cloud provider account info
+              default: "ENZ-account"
+            acl:
+              type: string
+              title: ACL
+              description: The canned ACL to apply. Conflicts with grant
+              default: "private"  
+            analyticsConfiguration:
+              type: string
+              title: Analytics Configuration
+              description: Map containing bucket analytics configuration
+              default: "Disabled"
+            analyticsSelfSourceDestination:
+              type: boolean
+              title: Analytics Self Source Destination
+              description: Whether or not the analytics source bucket is also the destination bucket
+              enum:
+                - true
+                - false
+              default: false
+            analyticsSourceAccountId:
+              type: string
+              title: Analytics Source Account ID
+              description: The analytics source account id
+              default: "enz-account-id"
+            analyticsSourceBucketArn:
+              type: string
+              title: Analytics Source Bucket ARN
+              description: The analytics source bucket ARN
+              default: "arn:aws:s3:::enz-bucket"
+            attachAccessLogDeliveryPolicy:
+              type: boolean
+              title: Attach Access Log Delivery Policy
+              description: Controls if S3 bucket should have S3 access log delivery policy attached
+              enum:
+                - true
+                - false
+              default: false
+            attachAnalyticsDestinationPolicy:
+              type: boolean
+              title: Attach Analytics Destination Policy
+              description: Controls if S3 bucket should have bucket analytics destination policy attached
+              enum:
+                - true
+                - false
+              default: false
+            attachDenyIncorrectEncryptionHeaders:
+              type: boolean
+              title: Attach Deny Incorrect Encryption Headers
+              description: Controls if S3 bucket should deny incorrect encryption headers policy attached
+              enum:
+                - true
+                - false
+              default: false
+            attachDenyIncorrectKmsKeySse:
+              type: boolean
+              title: Attach Deny Incorrect KMS Key SSE
+              description: Controls if S3 bucket policy should deny usage of incorrect KMS key SSE
+              enum:
+                - true
+                - false
+              default: true
+            attachDenyUnencryptedObjectUploads:
+              type: boolean
+              title: Attach Deny Unencrypted Object Uploads
+              description: Controls if S3 bucket should deny unencrypted object uploads policy attached
+              enum:
+                - true
+                - false
+              default: false
+            attachElbLogDeliveryPolicy:
+              type: boolean
+              title: Attach ELB Log Delivery Policy
+              description: Controls if S3 bucket should have ELB log delivery policy attached
+              enum:
+                - true
+                - false
+              default: false
+            attachInventoryDestinationPolicy:
+              type: boolean
+              title: Attach Inventory Destination Policy
+              description: Controls if S3 bucket should have bucket inventory destination policy attached
+              enum:
+                - true
+                - false
+              default: false
+            attachLbLogDeliveryPolicy:
+              type: boolean
+              title: Attach LB Log Delivery Policy
+              description: Controls if S3 bucket should have ALB/NLB log delivery policy attached
+              enum:
+                - true
+                - false
+              default: false
+            attachPublicPolicy:
+              type: boolean
+              title: Attach Public Policy
+              description: Controls if a user defined public bucket policy will be attached 
+              enum:
+                - true
+                - false
+              default: true
+            client:
+              type: string
+              title: Client
+              description: Name of the client
+              default: United Airlines
+            corsRule:
+              type: string
+              title: CORS Rule
+              description: List of maps containing rules for Cross-Origin Resource Sharing
+              default: "None"
+            env:
+              type: string
+              title: Environment
+              description: Name of the current environment
+              default: "dev"
+            expectedBucketOwner:
+              type: string
+              title: Expected Bucket Owner
+              description: The account ID of the expected bucket owner
+              default: "enz-cloud3.0-123"
+            grant:
+              type: string
+              title: Grant
+              description: An ACL policy grant. Conflicts with acl
+              default: "None"
+            intelligentTiering:
+              type: string
+              title: Intelligent Tiering
+              description: Map containing intelligent tiering configuration
+              default: "Disabled"
+            inventorySelfSourceDestination:
+              type: string
+              title: Inventory Self Source Destination
+              description: Whether or not the inventory source bucket is also the destination bucket
+              enum:
+                - yes
+                - no
+              default: no
+            inventorySourceAccountId:
+              type: string
+              title: Inventory Source Account ID
+              description: The inventory source account id
+              default: "enz-account-id"
+            inventorySourceBucketArn:
+              type: string
+              title: Inventory Source Bucket ARN
+              description: The inventory source bucket ARN
+              default: "arn:aws:s3:::enz-inventory-bucket"
+            kms:
+              type: string
+              title: KMS
+              description: KMS settings for the S3 bucket. It's best-practice to create your own key and pass the ARN var.kms_key_arn instead
+              default: "aws/s3"
+            metricConfiguration:
+              type: string
+              title: Metric Configuration
+              description: Map containing bucket metric configuration
+              default: "Disabled"
+            objectLockConfiguration:
+              type: string
+              title: Object Lock Configuration
+              description: Map containing S3 object locking configuration
+              default: "Disabled"
+            objectLockEnabled:
+              type: boolean
+              title: Object Lock Enabled
+              description: Whether S3 bucket should have an Object Lock configuration enabled
+              enum:
+                - true
+                - false                        
+              default: false
+            overrides:
+              type: string
+              title: Overrides
+              description: A map of overrides to pass to the module that can be used by the local overrides.
+              default: "None"
+            owner:
+              type: string
+              title: Owner
+              description: Bucket owner's display name and ID. Conflicts with acl
+              default: "enz-cloud3.0"
+            prefix:
+              type: string
+              title: Prefix
+              description: Prefix override for all generated naming conventions
+              default: "ual"
+            project:
+              type: string
+              title: Project
+              description: Name of the client project
+              default: "egi"
+            replicationConfiguration:
+              type: string
+              title: Replication Configuration
+              description: Map containing cross-region replication configuration
+              default: "Disabled"
+            requestPayer:
+              type: string
+              title: Request Payer
+              description: Specifies who should bear the cost of Amazon S3 data transfer
+              default: "ENZBucket"
+            ssmParameterName:
+              type: string
+              title: SSM Parameter Name
+              description: SSM parameter name to store S3 bucket name
+              default: "/enz/parameter"
+            website:
+              type: string
+              title: Website Configuration
+              description: Map containing static web-site hosting or redirect configuration
+              default: "Disabled"
+  
+        dynamodb:
+          type: object
+          properties:
+            name:
+              type: string
+              title: DynamoDB Name
+              description: This is the human-readable name for the dynamodb table. If omitted, Terraform will assign a random name
+              default: "MyDynamoDBTable"
+            hashKey:
+              type: string
+              title: Hash Key
+              description: The attribute to use as the hash (partition) key. Must also be defined as an attribute
+              default: "Test_Example"
+            rangeKey:
+              type: string
+              title: Range Key
+              description: The attribute to use as the range (sort) key. Must also be defined as an attribute
+              default: "Test_Example"
+            attributes:
+              type: string
+              title: Attributes
+              description: List of nested attribute definitions. Only required for hash_key and range_key attributes.
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  type:
+                    type: string
+                    enum: ["S", "N", "B"] # String, Number, Binary
+              default: [S]
+            createTable:
+              type: boolean
+              title: Create Table
+              description: Controls if DynamoDB table and associated resources are created
+              enum:
+                - true
+                - false
+              default: true
+            region:
+              type: string
+              title: Region
+              description: Name of the region
+              default: "us-east-1"
+            account:
+              type: string
+              title: Account
+              description: Current cloud provider account info.
+              default: "CloudNext"
+            env:
+              type: string
+              title: Env
+              description: Name of the current environment
+              default: "dev"
+            autoscalingEnabled:
+              type: boolean
+              title: Autoscaling Enabled
+              description: Whether or not to enable autoscaling. See note in README about this setting
+              enum:
+                - true
+                - false
+              default: false
+            autoscalingRead:
+              type: integer
+              title: Autoscaling Read
+              description: A map of read autoscaling settings. max_capacity is the only required key
+              default: 0
+            autoscalingWrite:
+              type: integer
+              title: Autoscaling Write
+              description: A map of write autoscaling settings. max_capacity is the only required key
+              default: 0
+            globalSecondaryIndexes:
+              type: string
+              title: Global Secondary Indexes
+              description: Describe a GSI for the table; subject to the normal limits on the number of GSIs, projected attributes, etc.
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  hash_key:
+                    type: string
+                  rangeKey:
+                    type: string
+                  projectionType:
+                    type: string
+                    enum: ["ALL", "KEYS_ONLY", "INCLUDE"]
+                  readCapacity:
+                    type: integer
+                  writeCapacity:
+                    type: integer
+              default: []
+            localSecondaryIndexes:
+              type: string
+              title: Local Secondary Indexes
+              description: Describe an LSI on the table; these can only be allocated at creation so you cannot change this definition after you have created the resource.
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  rangeKey:
+                    type: string
+                  projectionType:
+                    type: string
+                    enum: ["ALL", "KEYS_ONLY", "INCLUDE"]
+              default: []
+            deletionProtectionEnabled:
+              type: boolean
+              title: Deletion Protection Enabled
+              description: Enables deletion protection for table
+              enum:
+                - true
+                - false
+              default: false
+            streamEnabled:
+              type: boolean
+              title: Stream Enabled
+              description: Indicates whether Streams are to be enabled (true) or disabled (false).
+              default: false
+            streamViewType:
+              type: string
+              title: Stream View Type
+              description: When an item in the table is modified, StreamViewType determines what information is written to the table's stream.
+              enum: ["NEW_IMAGE", "OLD_IMAGE", "NEW_AND_OLD_IMAGES", "KEYS_ONLY"]
+              default: "NEW_IMAGE"
+            tableClass:
+              type: string
+              title: Table Class
+              description: The storage class of the table. Valid values are STANDARD and STANDARD_INFREQUENT_ACCESS
+              enum: ["STANDARD", "STANDARD_INFREQUENT_ACCESS"]
+              default: "STANDARD"
+            onDemandThroughput:
+              type: boolean
+              title: On Demand Throughput
+              description: Sets the maximum number of read and write units for the specified on-demand table
+              default: false
+            tags:
+              type: string
+              title: Tags
+              description: A map of tags to add to all resources
+              default: "{}"          
+            advancedProperties:
+              type: array
+              title: Advanced Properties
+              maxItems: 1
+              items:
+                 $ref: '#/attributes/dynamodbadvanceproperties'
+        
+        dynamodbadvanceproperties:
+          type: object
+          properties:
+            autoscalingDefaults:
+              type: object
+              title: Autoscaling Defaults
+              description: A map of default autoscaling settings
+              properties:
+                read_capacity:
+                  type: integer
+                  default: 5
+                write_capacity:
+                  type: integer
+                  default: 5
+            autoscalingIndexes:
+              type: object
+              title: Autoscaling Indexes
+              description: A map of index autoscaling configurations. See example in examples/autoscaling  
+              properties:
+                example_index:
+                  type: object
+                  properties:
+                    read_capacity:
+                      type: integer
+                      default: 10
+                    write_capacity:
+                      type: integer
+                      default: 10
+            client:
+              type: string
+              title: Client
+              description: Name of the client
+              default: "United Airlines"
+            enableRangedKey:
+              type: boolean
+              title: Enable Ranged Key
+              description: 
+              enum:
+                - true
+                - false
+              default: false
+            ignoreChangesGlobalSecondaryIndex:
+              type: boolean
+              title: Ignore Changes Global Secondary Index
+              description: Whether to ignore changes lifecycle to global secondary indices, useful for provisioned tables with scaling
+              enum:
+                - true
+                - false
+              default: false
+            importTable:
+              type: object
+              title: Import Table
+              description: Configurations for importing s3 data into a new table.
+              properties:
+                s3_bucket:
+                  type: string
+                  default: "my-backup-bucket"
+                s3_key:
+                  type: string
+                  default: "backup/dynamodb-export.json"
+            kms:
+              type: object
+              title: KMS
+              description: KMS settings for key. It's advised to create your own KMS key and pass the ARN to var.kms_key_arn instead.
+              properties:
+                enable_encryption:
+                  type: boolean
+                  default: true
+            kmsKeyArn:
+              type: string
+              title: KMS Key ARN
+              description: KMS key ARN for existing KMS key used for encrypting DynamoDB Table. If not provided, a KMS key will be generated using the values specified in var.kms_key.
+              default: "arn:aws:kms:us-east-1:123456789012:key/cloudnext1234-enz-5678"
+            onDemandThroughput:
+              type: integer
+              title: On Demand Throughput
+              description: Sets the maximum number of read and write units for the specified on-demand table
+              default: 1000
+            overrides:
+              type: string
+              title: Overrides
+              description: A map of overrides to pass to the module that can be used by the local overrides
+              properties:
+                billing_mode:
+                  type: string
+                  default: "PAY_PER_REQUEST"
+            prefix:
+              type: string
+              title: Prefix
+              description: Prefix override for all generated naming conventions
+              defaut: "ual"
+            project:
+              type: string
+              title: Project
+              description: Name of the client project.
+              default: "egi"
+            replicaRegions:
+              type: array
+              title: Replica Regions
+              description: Region configurations for creating replicas for a global DynamoDB table.
+              items:
+                type: string
+              default: ["us-east-1", "us-east-2"]
+            replicaTags:
+              type: object
+              title: Replica Tags
+              description: A map of tags to add to all resources
+              properties:
+                environment:
+                  type: string
+                  default: "dev"
+                team:
+                  type: string
+                  default: "cloudnext"
+            restoreDateTime:
+              type: string
+              title: Restore Date Time
+              description: Time of the point-in-time recovery point to restore.
+              format: date-time
+              default: "2024-01-01T12:00:00Z"
+            restoreSourceName:
+              type: string
+              title: Restore Source Name
+              description: Name of the table to restore. Must match the name of an existing table.
+              default: "BackupTable"
+            restoreSourceTableArn:
+              type: string
+              title: Restore Source Table ARN
+              description: ARN of the source table to restore. Must be supplied for cross-region restores.
+              default: "arn:aws:dynamodb:us-east-1:123456789012:table/BackupTable"
+            restoreToLatestTime:
+              type: boolean
+              title: Restore To Latest Time
+              description: If set, restores table to the most recent point-in-time recovery point.
+              enum:
+                - true
+                - false
+              default: true
+            ssmParameterName:
+              type: string
+              title: SSM Parameter Name
+              description: SSM parameter name to store SNS topic name.
+              default: "/dynamodb/config"
+            timeouts:
+              type: object
+              title: Timeouts
+              description: Updated Terraform resource management timeouts
+              properties:
+                create:
+                  type: string
+                  default: "60m"
+                update:
+                  type: string
+                  default: "30m"
+                delete:
+                  type: string
+                  default: "30m"
+            ttlAttributeName:
+              type: string
+              title: TTL Attribute Name
+              description: The name of the table attribute to store the TTL timestamp in
+              default: "expirationTime"
+            ttlEnabled:
+              type: boolean
+              title: TTL Enabled
+              description: Indicates whether ttl is enabled
+              enum:
+                - true
+                - false
+              default: true    
+        sns:
+          type: object
+          properties:
+            name:
+              type: string
+              title: SNS Name
+              description: Required to define the SNS topic name
+              default: "MySNSTopic"
+            region:
+              type: string
+              title: Region
+              description: Specifies the AWS region where the topic is created.
+              default: "us-east-2"
+            kmsKeyId:
+              type: string
+              title: KMS Key ID
+              description: Required for enabling encryption on the SNS topic
+              default: "alias/aws/sns"
+            deliveryPolicy:
+              type: string
+              title: Delivery Policy
+              description: Configures how SNS handles message delivery attempts
+              default: '{"http":{"defaultHealthyRetryPolicy":{"minDelayTarget":20,"maxDelayTarget":20,"numRetries":3,"numNoDelayRetries":0,"backoffFunction":"linear"}}}'
+            tracingConfig:
+              type: string
+              title: Tracing Config
+              description: Determines whether AWS X-Ray tracing is enabled
+              default: "PassThrough"
+            displayName:
+              type: string
+              title: Display Name
+              description: A friendly display name for the SNS topic
+              default: "cloud3snsDisplay"
+            contentBasedDeduplication:
+              type: boolean
+              title: Content Based Deduplication
+              description: Used when FIFO topics require automatic deduplication
+              enum:
+                - true
+                - false
+              default: false
+            create:
+              type: boolean
+              title: Create
+              description: Determines whether an SNS topic should be created
+              enum:
+                - true
+                - false
+              default: true
+            createSubscription:
+              type: boolean
+              title: Create Subscription
+              description: Ensures SNS topic subscriptions are created
+              enum:
+                - true
+                - false
+              default: true
+            createTopicPolicy:
+              type: boolean
+              title: Create Topic Policy
+              description: Specifies if an SNS topic policy should be created
+              enum:
+                - true
+                - false
+              default: true
+            enableDefaultTopicPolicy:
+              type: boolean
+              title: SNS Name
+              description: Enables AWS's default topic policy, often needed for basic permissions
+              enum:
+                - true
+                - false
+              default: true
+            fifoTopic:
+              type: boolean
+              title: SNS Name
+              description: Indicates whether the SNS topic should be FIFO
+              enum:
+                - true
+                - false
+              default: false
+            subscriptions:
+              type: string
+              title: Subscriptions
+              description: Defines which services or endpoints subscribe to this SNS topic
+              default: 'arn:aws:sns:us-east-1:123456789012:example-topic'
+            tags:
+              type: string
+              title: Tags
+              description: Assigns metadata for cost allocation, tracking, and governance
+              default: "{}"          
+            advancedProperties:
+              type: array
+              title: Advanced Properties
+              maxItems: 1
+              items:
+                 $ref: '#/attributes/snsadvanceproperties'
+        
+        snsadvanceproperties:
+          type: object
+          properties:
+            account:
+              type: string
+              title: Account
+              description: Current cloud provider account info
+              default: "123456789012"
+            applicationFeedback:
+              type: string
+              title: Application Feedback
+              description: Map of IAM role ARNs and sample rate for success and failure feedback
+              default: "arn:aws"
+            archivePolicy:
+              type: string
+              title: Archive Policy
+              description: The message archive policy for FIFO topics	
+              default: "Enabled"
+            client:
+              type: string
+              title: Client
+              description: Name of the client	
+              default: "United Airlines"
+            dataProtectionPolicy:
+              type: string
+              title: Data Protection Policy
+              description: A map of data protection policy statements
+              default: "StandardEncryption"
+            env:
+              type: string
+              title: Environment
+              description: Name of the current environment
+              default: "dev"
+            firehoseFeedback:
+              type: string
+              title: Firehose Feedback
+              description: Map of IAM role ARNs and sample rate for success and failure feedback
+              default: "arn:aws:iam::123456789012:role/SNSFirehoseFeedbackRole"
+            httpFeedback:
+              type: string
+              title: HTTP Feedback
+              description: Map of IAM role ARNs and sample rate for success and failure feedback
+              default: "arn:aws:iam::123456789012:role/SNSHttpFeedbackRole"
+            kmsKey:
+              type: string
+              title: KMS Key
+              description: KMS settings for the SNS topic. Create your own KMS key and pass the ARN to var.kms_key_id instead
+              default: "arn:aws:kms:us-east-1:123456789012:key/example-kms-key"
+            lambdaFeedback:
+              type: string
+              title: Lambda Feedback
+              description: Map of IAM role ARNs and sample rate for success and failure feedback
+              default: "arn:aws:iam::123456789012:role/SNSLambdaFeedbackRole"
+            overrideTopicPolicyDocuments:
+              type: string
+              title: Override Topic Policy Documents
+              description: List of IAM policy documents that are merged together into the exported document. In merging, statements with non-blank sids will override statements with the same sid
+              default: "cloud3OverridePolicy"
+            overrides:
+              type: string
+              title: Overrides
+              description: A map of overrides to pass to the module that can be used by the local overrides
+              default: "NoOverrides"
+            prefix:
+              type: string
+              title: Prefix
+              description: Prefix override for all generated naming conventions
+              default: "ual"
+            project:
+              type: string
+              title: Project
+              description: Name of the client project
+              default: "egi"
+            signatureVersion:
+              type: number
+              title: Signature Version
+              description: should be 1 (SHA1) or 2 (SHA256). It corresponds to the hashing algorithm used while creating the signature of the notifications, subscription confirmations, or unsubscribe confirmation messages sent by Amazon SNS.	
+              default: 2
+            sourceTopicPolicyDocuments:
+              type:
+              title: Source Topic Policy Documents
+              description: List of IAM policy documents that are merged together into the exported document. Statements must have unique sids
+              default: "cloud3ctSourcePolicy"
+            sqsFeedback:
+              type: string
+              title: SQS Feedback
+              description: Map of IAM role ARNs and sample rate for success and failure feedback
+              default: "arn:aws:iam::123456789012:role/SNSSqsFeedbackRole"
+            ssmParameterName:	
+              type: string
+              title: SSM Parameter Name
+              description: SSM parameter name to store SNS topic name
+              default: "/sns/topic/name"
+            topicPolicy:	
+              type: string
+              title: Topic Policy
+              description: An externally created fully-formed AWS policy as JSON
+              default: "cloud3TopicPolicy"
+            topicPolicyStatements:
+              type: string
+              title: Topic Policy Statements
+              description: A map of IAM policy statements for custom permission usage
+              default: "cloud3PolicyStatements"
+            useNamePrefix:
+              type: boolean
+              title: Use Name Prefix
+              description: Determines whether name is used as a prefix
+              default: false
+
+        sqs:
+          type: object
+          properties:
+            name:
+              type: string
+              title: SQS Name
+              description: Required for defining the SQS queue name
+              default: "MySQSQueue"
+            region:
+              type: string
+              title: Region
+              description: Specifies the AWS region where the queue is created
+              default: "us-east-2"          
+            create:
+              type: boolean
+              title: Create
+              description: Determines whether the SQS queue should be created
+              enum:
+                - true
+                - false
+              default: true
+            kmsKeyId:
+              type: string
+              title: KMS Key ID
+              description: Required if encryption is needed for messages
+              default: "alias/aws/sqs"
+            sqsManagedSseEnabled:
+              type: string
+              title: SQS Managed SSE Enabled
+              description: Enables server-side encryption (SSE) with SQS-owned encryption keys
+              enum:
+                - true
+                - false
+              default: true
+            fifoQueue:
+              type: string
+              title: FIFO Queue
+              description: Indicates if the queue should be FIFO (used for ordered message delivery)
+              enum:
+                - true
+                - false
+              default: false
+            contentBasedDeduplication:
+              type: string
+              title: Content Based Deduplication
+              description: Needed for FIFO queues to prevent duplicate messages
+              enum:
+                - true
+                - false
+              default: false
+            maxMessageSize:
+              type: number
+              title: Max Message Size
+              description: Limits the size of messages (1 KB to 256 KB)
+              default: 262144  # 256 KB
+            messageRetentionSeconds:
+              type: number
+              title: Max Retention Seconds
+              description: Defines how long messages are kept in the queue (defaults to 4 days, can be 1 min to 14 days)
+              default: 345600  # 4 days
+            visibilityTimeoutSeconds:
+              type: number
+              title: Visibility Timeout Seconds
+              description: Determines how long a message remains invisible after being received (important for preventing duplicate processing)
+              default: 30  # 30 seconds
+            receiveWaitTimeSeconds:
+              type: number
+              title: Receive Wait Time Seconds
+              description: Controls long polling to reduce empty responses and lower costs
+              default: 0  # 0 seconds
+            delaySeconds:
+              type: number
+              title: Delay Seconds
+              description: Specifies a delay for all messages being sent to the queue
+              default: 0  # 0 seconds
+            createDlq:
+              type: string
+              title: Create DLQ
+              description: Specifies whether a Dead Letter Queue should be created
+              enum:
+                - true
+                - false
+              default: false
+            redrivePolicy:
+              type: string
+              title: Redrive Policy
+              description: Defines the Dead Letter Queue (DLQ) policy
+              default: ""
+            tags:
+              type: string
+              title: Tags
+              description: Assigns metadata for cost allocation, tracking, and governance
+              default: "{}"          
+            advancedProperties:
+              type: array
+              title: Advanced Properties
+              maxItems: 1
+              items:
+                 $ref: '#/attributes/sqsadvanceproperties'
+        sqsadvanceproperties:
+          type: object
+          properties:
+            account:
+              type: string
+              title: Account
+              description: Current cloud provider account info
+              default: "123456789012"
+            client:	
+              type: string
+              title: Client
+              description: Name of the client		
+              default: United Airlines
+            create_dlq:
+              type: boolean
+              title: Create DLQ
+              description: Determines whether to create SQS dead letter queue
+              enum:
+                - true
+                - false
+              default: false
+            createDlqQueuePolicy:
+              type: boolean
+              title: Create DLQ Queue Policy
+              description: Whether to create SQS queue policy	
+              enum:
+                - true
+                - false
+              default: false
+            createDlqRedriveAllowPolicy:
+              type: boolean
+              title: Create DLQ Redrive Allow Policy
+              description: Determines whether to create a redrive allow policy for the dead letter queue
+              enum: 
+                - true
+                - false
+              default: true
+            createQueuePolicy:
+              type: boolean
+              title: Create Queue Policy
+              description: Whether to create SQS queue policy
+              enum:
+                - true
+                - false
+              default: true
+            deduplicationScope:
+              type: string
+              title: Deduplication Scope
+              description: Specifies whether message deduplication occurs at the message group or queue level
+              default:
+            dlqContentBasedDeduplication:
+              type: boolean
+              title: DLQ Content Based Deduplication
+              description: Enables content-based deduplication for FIFO queues
+              enum:
+                - true
+                - false
+              default: false
+            dlqDeduplicationScope:
+              type: string
+              title: DLQ Deduplication Scope
+              description: Specifies whether message deduplication occurs at the message group or queue level
+              default:
+            dlqDelaySeconds:
+              type: number
+              title: DLQ Delay Seconds
+              description: The time in seconds that the delivery of all messages in the queue will be delayed. An integer from 0 to 900 (15 minutes)	
+              default:
+            dlqKmsDataKeyReusePeriodSeconds:
+              type: number
+              title: DLQ KMS Data Key Reuse Period Seconds
+              description: An integer representing seconds, between 60 seconds (1 minute) and 86,400 seconds (24 hours)
+              default: 60
+            dlqKmsKey:
+              type: string
+              title: DLQ KMS Key
+              description: KMS settings for SQS DLQ. It's advised to create your own KMS key and pass the ARN to var.dlq_kms_key_id instead
+              default:
+            dlqKmsKeyId:
+              type: string
+              title: DLQ KMS Key ID
+              description: The ID of an AWS-managed customer master key (CMK) for Amazon SQS or a custom CMK
+              default:
+            dlqMessageRetentionSeconds:
+              type: number
+              title: DLQ Message Retention Seconds
+              description: The number of seconds Amazon SQS retains a message. Integer representing seconds, from 60 (1 minute) to 1209600 (14 days).	
+              default: 60
+            dlqName:
+              type: string
+              title: DLQ Name
+              description: This is the human-readable name of the queue. If omitted, Terraform will assign a random name.	
+              default:
+            dlqQueuePolicyStatements:
+              type: string
+              title: DLQ Queue Policy Statements
+              description: A map of IAM policy statements for custom permission usage
+              default: 
+            dlqReceiveWaitTimeSeconds:
+              type: number
+              title: DLQ Receive Wait Time Seconds
+              description: The time for which a ReceiveMessage call will wait for a message to arrive (long polling) before returning. An integer from 0 to 20 (seconds)
+              default:
+            dlqRedriveAllowPolicy:
+              type: string
+              title: DLQ Redrive Allow Policy
+              description: The JSON policy to set up the Dead Letter Queue redrive permission, see AWS docs
+              default:
+            dlqSqsManagedSseEnabled:
+              type: boolean
+              title: DLQ SQS Managed SSE Enabled
+              description: Boolean to enable server-side encryption (SSE) of message content with SQS-owned encryption keys
+              enum:
+                - true
+                - false
+              default: true
+            dlqTags:
+              type: string
+              title: DLQ Tags
+              description: A mapping of additional tags to assign to the dead letter queue
+              default:
+            dlqVisibilityTimeoutSeconds:
+              type: number
+              title: DLQ Visibility Timeout Seconds
+              description: The visibility timeout for the queue. An integer from 0 to 43200 (12 hours)
+              default:
+            env:
+              type: string
+              title: Env
+              description: Name of the current environment.
+              default: dev
+            fifoThroughputLimit:
+              type: string
+              title: FIFO Throughput Limit
+              description: Specifies whether the FIFO queue throughput quota applies to the entire queue or per message group
+              default:
+            kmsDataKeyReusePeriodSeconds:
+              type: number
+              title: KMS Data Key Reuse Period Seconds
+              description: An integer representing seconds, between 60 seconds (1 minute) and 86,400 seconds (24 hours).		
+              default: 3600
+            kmsKey:
+              type: string
+              title: KMS Key
+              description: KMS settings for SQS. It's advised to create your own KMS key and pass the ARN to var.kms_key_id instead.	
+              default:
+            
+  steps:
+    - id: trigger
+      name: Creating Standardized Harness CI Pipeline For the Stack You Selected.
+      action: trigger:harness-custom-pipeline
+      input:
+        url: https://app.harness.io/ng/
+        
+        hidePipelineURLLog: false
+        inputset:
+          appCI: ${{ parameters.projectId | dump }}
+          techarea: ${{ parameters.techarea | dump }}
+          techstack: ${{ parameters.techstack | dump }}
+          S3props: ${{ parameters.S3 | dump }}
+          DBprops: ${{ parameters.DynamoDB | dump }}
+          Kinesisprops: ${{ parameters.Kinesis | dump }}
+          SQSprops: ${{ parameters.SQS | dump }}
+          SecretsManagerprops: ${{ parameters.SecretsManager | dump }}
+          SNSprops: ${{ parameters.SNS | dump }}
+          Lambdaprops: ${{ parameters.Lambda | dump }}
+          AppSyncprops: ${{ parameters.AppSync | dump }}
+          containerPlatform: ${{ parameters.containerPlatform | dump }}
+          appinfo: ${{ parameters.appinfo | dump }}
+          primaryRegion: ${{ parameters.primaryRegion | dump }}
+          featureBranch: ${{ parameters.featureBranch | dump }}
+          accountType: ${{ parameters.accountType | dump }}
+          target_group_config: ${{ parameters.target_group_config | dump }}
+        apikey: ${{ parameters.token }}
+        showOutputVariables: true
+
+  output:
+    links:
+      - title: Pipeline Details
+        url: ${{ steps.trigger.output.PipelineUrl }}

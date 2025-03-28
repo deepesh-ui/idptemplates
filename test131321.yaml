@@ -8,7 +8,7 @@ spec:
   owner: deepesh.kumar@harness.io
   type: service
   parameters:
-    - title: Deploy service
+    - title: Test service
       properties:
         name1:
           title: placeholder Test
@@ -30,16 +30,7 @@ spec:
             - title: New Key
               const: false
           ui:widget: radio
-          default: true          
-        username:
-          title: Username
-          type: string
-        version:
-          title: Version
-          type: string
-        apiKeySecret:  
-          title: API Key Secret
-          type: string
+          default: true 
            
   steps:
     - id: trigger

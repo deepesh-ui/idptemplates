@@ -1,72 +1,68 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: deep-demo
-  title: deep-demo
-  description: api-demo
+  namespace: default
+  annotations:
+    backstage.io/managed-by-location: url:https://github.com/ATT-DP10/apm0014514-dcp-workflows/tree/service-workflow/services/scan-multibranch-pipeline-workflow.yaml
+    backstage.io/managed-by-origin-location: url:https://github.com/ATT-DP10/apm0014514-dcp-workflows/blob/service-workflow/services/scan-multibranch-pipeline-workflow.yaml
+    backstage.io/view-url: https://github.com/ATT-DP10/apm0014514-dcp-workflows/tree/service-workflow/services/scan-multibranch-pipeline-workflow.yaml
+    backstage.io/edit-url: https://github.com/ATT-DP10/apm0014514-dcp-workflows/edit/service-workflow/services/scan-multibranch-pipeline-workflow.yaml
+    backstage.io/source-location: url:https://github.com/ATT-DP10/apm0014514-dcp-workflows/tree/service-workflow/services/
+  name: scan-multibranch-pipeline-workflow
+  title: Scan Multibranch Pipeline Workflow
+  description: Scan Multibranch Pipeline for given service will be triggered.
+  uid: dc8e5783-25a1-410f-b41d-795af2a98e59
+  etag: fe8767e53efb603a28d134824350223b1086a9f1
+relations:
+  - type: ownedBy
+    targetRef: group:default/dcp
+    target:
+      kind: group
+      namespace: default
+      name: dcp
 spec:
   owner: DCP
   type: service
   parameters:
-    - title: Fill in the repo details
+    - title: Fill in some steps
+      required:
+        - microservice_name
+        - team
       properties:
-        test:
+        microservice_name:
+          title: Service Name
           type: string
-          ui:field: SelectFieldFromApi
-          ui:options:
-            placeholder: Select-env
-            path: catalog/entities
-            valueSelector: metadata.uid
-            allowArbitraryValues: false
-        uid:
-         type: string
-         ui:field: SelectFieldFromApi
-         ui:options:
-           placeholder: SELECT-UID
-           path: catalog/entities
-           valueSelector: metadata.uid
-           labelSelector: metadata.name
-           allowArbitraryValues: false    
-        detail2:
-         type: string
-         ui:field: SelectFieldFromApi
-         ui:options:
-           placeholder: Select titles
-           path: catalog/entities?filter=metadata.uid={{parameters.uid}}
-           valueSelector: metadata.name      
-           allowArbitraryValues: false     
-           setContextData:
-             component_name2: metadata.name
-             component_uid2: metadata.uid 
-             component_title2: metadata.title     
-        detail3:
-         type: string
-         ui:field: SelectFieldFromApi
-         ui:options:
-           placeholder: Select titles
-           path: catalog/entities/by-uid/{{parameters.uid}}
-           valueSelector: metadata.name
-           allowArbitraryValues: false
-           setContextData:
-             component_name3: metadata.name
-             component_uid3: metadata.uid 
-             component_title3: metadata.title                        
-        formContext:
-          title: Live Form Context
-          description: DEBUG Context
+          description: Unique name of the service going to create
+          minLength: 3
+          maxLength: 50
+          pattern: (?!.*-_)(?!.*_-)(?!.*--)(?!.*__)(?!.*-$)(?!.*_$)^[a-zA-Z]+[a-zA-Z0-9-_]*[a-zA-Z0-9-_]+$
+          ui:autofocus: true
+          ui:help: It should not have ITAP ID in it. It doesnot start with - _ and
+            numbers.length should be in between 3 to 60.Name allows only a-z A-Z
+            0-9 _ and -Does not allows -- __ -_ and _-Does not allows - and _ at
+            end.
+        team:
+          title: Team Name
           type: string
-          ui:field: ContextViewer
+          description: Enter the name of your team
+          ui:field: HarnessProjectPicker
           ui:options:
-            getContextData: {{formContext}}             
-
+            allowedKinds:
+              - Group
+        token:
+          title: Harness Token
+          type: string
+          ui:widget: password
+          ui:field: HarnessAuthToken
   steps:
     - id: trigger
-      name: Onboarding a New GitHub Repository
+      name: Triggering Scan Multibranch pipeline in jenkins
       action: trigger:harness-custom-pipeline
       input:
-        url: https://app.harness.io/ng/account/278oQOylSUWVALR6dOgnhg/module/ci/orgs/default/projects/DirectTVDemo/pipelines/GitHub_Repository_Onboarding_Clone_Clone/pipeline-studio?storeType=INLINE
+        url: https://app.harness.io/ng/account/ow3wOLKoQASF8ih6yBsvAw/all/orgs/DCP/projects/DCPSandbox/pipelines/multibranch_pipeline_test/pipeline-studio/?storeType=REMOTE&connectorRef=account.dcpgithub&repoName=apm0014514-dcp-workflow-pipelines&branch=services&stageId=scan_multibranch&sectionId=OVERVIEW
         inputset:
-          aws_account: ${{ parameters.aws_account }}
+          service_name: ${{ parameters.microservice_name }}
+          team_name: ${{ parameters.team }}
         apikey: ${{ parameters.token }}
         showOutputVariables: true
   output:
@@ -74,11 +70,5 @@ spec:
       - title: Pipeline Details
         url: ${{ steps.trigger.output.PipelineUrl }}
     text:
-      - title: Outputs
-        content: |
-          return: ${{steps.trigger.output.RETURN_VAL}},github_org_name: ${{ parameters.github_org_name}},github_repo_name: ${{ parameters.github_repo_name}}
-
-
-
-
-          
+      - title: Result
+        content: ${{ steps.trigger.output.build_result}}

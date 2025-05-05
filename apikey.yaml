@@ -1,8 +1,8 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: x-api-key
-  title: Deploy service using x-api-key
+  name: x-api-key-new
+  title: Deploy service using x-api-key new
   description: A template to Deploy service
 spec:
   owner: deepesh.kumar@harness.io

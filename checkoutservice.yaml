@@ -8,4 +8,5 @@ spec:
   owner: team-payment
   system:
     - artist-engagement-portal
+    - artist-engagement-portal-new
     - payment-service

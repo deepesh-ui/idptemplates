@@ -6,7 +6,6 @@ spec:
   type: service
   lifecycle: production
   owner: team-payment
-  system: artist-engagement-portal
-
-
-
+  system:
+    - artist-engagement-portal
+    - payment-service

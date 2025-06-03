@@ -1,0 +1,12 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: payment-service
+spec:
+  type: service
+  lifecycle: production
+  owner: team-payment
+  system: artist-engagement-portal
+
+
+

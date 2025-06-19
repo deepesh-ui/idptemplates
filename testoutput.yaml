@@ -13,11 +13,6 @@ spec:
   type: harness_project
   parameters:
     - title: User Onboarding Details
-      required:
-        - username
-        - organization_id
-        - project_id
-        - user_group_id
       properties:
         token:
           title: Harness Token

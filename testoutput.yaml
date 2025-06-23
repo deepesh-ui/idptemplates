@@ -28,7 +28,7 @@ spec:
       name: Onboarding user
       action: trigger:harness-custom-pipeline
       input:
-        url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/module/idp-admin/orgs/default/projects/Deepesh_CDE/pipelines/workflowtest/pipeline-studio/?repoIdentifier=null&repoName=null&branch=null&storeType=INLINE
+        url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/module/idp-admin/orgs/default/projects/Deepesh_CDE/pipelines/testoutputwithremote/pipeline-studio/?branch=main&repoName=deepesh-templates&connectorRef=&storeType=REMOTE
         inputset:
           version: 5
         apiKeySecret: Deepesh_X_API_Key

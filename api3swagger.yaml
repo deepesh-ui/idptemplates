@@ -7,8 +7,7 @@ spec:
   type: openapi
   lifecycle: production
   owner: user:example
-  definition:
-    $text: |
+  definition: |-
       openapi: 3.0.0
       info:
         title: Sample API

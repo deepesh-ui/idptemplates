@@ -1,7 +1,7 @@
 apiVersion: backstage.io/v1alpha1
 kind: API
 metadata:
-  name: sample-openapi
+  name: sample-openapi-three
   description: A sample OpenAPI 3.0 definition
 spec:
   type: openapi

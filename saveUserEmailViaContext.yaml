@@ -27,7 +27,7 @@ spec:
           type: string
           ui:field: ContextViewer
           ui:options: 
-            getContextData: {{formContext.email}}              
+            getContextData: "{{formContext.email}}"
   steps:
   - action: debug:log
     id: debug-pull-request

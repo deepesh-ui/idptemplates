@@ -12,6 +12,7 @@ spec:
       properties:
         accoundId: 
           type: string
+          title: Account ID
         customValidate:
           type: string
           ui:field: ValidateAndFetch

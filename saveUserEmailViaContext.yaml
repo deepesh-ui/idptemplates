@@ -10,13 +10,15 @@ spec:
   parameters:
     - title: Enter your details
       properties:
+        accoundId: 
+          type: string
         customValidate:
           type: string
           ui:field: ValidateAndFetch
           ui:options:
             button: 
               title: Auto Select Current User
-            path: proxy/harness-api/ng/api/user/currentUser?accountIdentifier=zEaak-FLS425IEO7OLzMUg&pageIndex=0&pageSize=50
+            path: proxy/harness-api/ng/api/user/currentUser?accountIdentifier={{parameters.accoundId}}&pageIndex=0&pageSize=50
             setContextData:
               email: data.name
         email:

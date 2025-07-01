@@ -18,7 +18,8 @@ spec:
               title: Auto Select Current User
             path: proxy/harness-api/ng/api/user/currentUser?accountIdentifier=zEaak-FLS425IEO7OLzMUg&pageIndex=0&pageSize=50
             contextData:
-              email: data.name
+              setContextData:
+                email: data.name
         email:
           title: User Email
           type: string

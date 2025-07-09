@@ -28,6 +28,12 @@ spec:
           ui:field: ContextViewer
           ui:options: 
             getContextData: ${{formContext.email}}
+        deubgdata:
+          title: User Email
+          type: string
+          ui:field: ContextViewer
+          ui:options: 
+            getContextData: ${{formContext}}            
   steps:
   - action: debug:log
     id: debug-pull-request

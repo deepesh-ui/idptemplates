@@ -40,7 +40,7 @@ spec:
           type: string
           ui:field: ContextViewer
           ui:options: 
-            getContextData: {{formContext.branch}}
+            getContextData: ${{formContext.branch}}
         titlePR:
           title: Title of PR
           description: Enter the Title of your Pull Request

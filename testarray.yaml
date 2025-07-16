@@ -1,7 +1,7 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: testarray
+  name: testarraynew
   namespace: account
   title: Test Array
 spec:

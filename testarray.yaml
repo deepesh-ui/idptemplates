@@ -4,13 +4,6 @@ metadata:
   name: testarray
   namespace: account
   title: Test Array
-relations:
-  - targetRef: user:account/deepesh.kumar
-    type: ownedBy
-    target:
-      kind: user
-      namespace: account
-      name: deepesh.kumar
 spec:
   output:
     text:

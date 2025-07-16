@@ -46,5 +46,3 @@ spec:
           usernames: ${{ parameters.usernames | join(",") }}
         apikey: ${{ parameters.token }}
         showOutputVariables: true
-  ownedBy:
-    - user:account/deepesh.kumar@harness.io

@@ -1,12 +1,12 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: step3kongonboardingrepobootstrapping
+  name: testarray
   namespace: account
   annotations:
     backstage.io/managed-by-origin-location: url:https://app.harness.io/Template/account/step3kongonboardingrepobootstrapping
     backstage.io/managed-by-location: url:https://app.harness.io/Template/account/step3kongonboardingrepobootstrapping
-  title: Step3-Kong-Onboarding-Repository-Bootstrapping
+  title: Test Array
 relations:
   - targetRef: user:account/deepesh.kumar
     type: ownedBy

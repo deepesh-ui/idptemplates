@@ -1,0 +1,36 @@
+parameters:
+  - title: Service, Environment and Infrastructure Details
+    required:
+      - service
+      - environment
+      - infrastructure
+    properties:
+      currUser: 
+        type: string
+        ui:field: SelectFieldFromApi     
+        ui:options:
+          title: Show Current user
+          allowArbitraryValues: true
+          path: proxy/harness-api/ng/api/user/currentUser?accountIdentifier=zEaak-FLS425IEO7OLzMUg&pageIndex=0&pageSize=50
+          valueSelector: 'data.name'
+          isObject: true
+      token:
+        title: Harness Token
+        type: string
+        ui:widget: password
+        ui:field: HarnessAuthToken
+steps:
+  - id: trigger
+    name: Deploy your Application
+    action: trigger:harness-custom-pipeline
+    input:
+      url: YOUR PIPELINE URL HERE
+      inputset:
+        pipeline.variables.service: ${{ parameters.service }}
+        pipeline.variables.infrastructure: ${{ parameters.infrastructure }}
+        pipeline.variables.environment: ${{ parameters.environment }}
+      apikey: ${{ parameters.token }}
+output:
+  links:
+    - title: Pipeline Details
+      url: ${{ steps.trigger.output.PipelineUrl }}

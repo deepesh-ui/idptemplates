@@ -1,8 +1,8 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: github-user-details
-  title: Get GitHub User Details
+  name: github-user-details-123
+  title: Get GitHub User Details 1234
   description: Fetch details of a GitHub user via the Backstage proxy.
 spec:
   owner: my-team

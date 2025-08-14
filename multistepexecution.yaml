@@ -1,11 +1,11 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: harness-pipeline-template
-  title: Harness Pipeline Template
-  description: Template demonstrating how to trigger a Harness Pipeline and poll for its completion
+  name: harness-pipeline-example
+  title: Harness Pipeline Example
+  description: Trigger and monitor a Harness pipeline execution
 spec:
-  owner: user:default/harness-user
+  owner: harness
   type: service
   parameters:
     - title: Pipeline Information
@@ -16,24 +16,25 @@ spec:
           title: Pipeline URL
           type: string
           description: URL of the Harness pipeline to trigger
-        apiKey:
-          title: API Key
-          type: string
-          description: Harness API key (optional if environment variable is set)
-          ui:field: password
+          ui:autofocus: true
         apiKeySecret:
           title: API Key Secret
           type: string
-          description: Name of the secret containing Harness API key
-        inputParameters:
-          title: Input Parameters
-          type: object
-          description: Input parameters for the pipeline
+          description: Secret reference for Harness API key (e.g. ${HARNESS_API_KEY})
+        apiKey:
+          title: API Key
+          type: string
+          description: Plain text API key (not recommended for production)
+          ui:widget: password
         hidePipelineURLLog:
           title: Hide Pipeline URL in Logs
           type: boolean
-          description: Whether to hide pipeline URL in logs
           default: false
+        inputParameters:
+          title: Input Parameters
+          type: object
+          description: Key-value pairs for pipeline input parameters
+          default: {}
 
   steps:
     - id: triggerPipeline
@@ -45,6 +46,15 @@ spec:
         apiKeySecret: ${{ parameters.apiKeySecret }}
         hidePipelineURLLog: ${{ parameters.hidePipelineURLLog }}
         inputset: ${{ parameters.inputParameters }}
+
+    - id: logPipelineInfo
+      name: Log Pipeline Information
+      action: debug:log
+      input:
+        message: |
+          Pipeline triggered successfully!
+          Pipeline URL: ${{ steps.triggerPipeline.output.pipelineUrl }}
+          Execution ID: ${{ steps.triggerPipeline.output.executionId }}
 
     - id: pollPipelineExecution
       name: Wait for Pipeline Completion
@@ -62,7 +72,33 @@ spec:
           branchName: ${{ steps.triggerPipeline.output.branchName }}
           repoIdentifier: ${{ steps.triggerPipeline.output.repoIdentifier }}
 
+    - id: displayResults
+      name: Display Results
+      action: debug:log
+      input:
+        message: |
+          Pipeline execution completed with status: ${{ steps.pollPipelineExecution.output.status }}
+          Output variables:
+          ${{ steps.pollPipelineExecution.output.outputVariables | dump }}
+
   output:
-    links:
-      - title: Pipeline Execution
-        url: ${{ steps.triggerPipeline.output.pipelineUrl }}
+    pipelineStatus:
+      title: Pipeline Execution Status
+      description: The status of the pipeline execution
+      type: string
+      value: ${{ steps.pollPipelineExecution.output.status }}
+    pipelineUrl:
+      title: Pipeline URL
+      description: URL to view the pipeline execution
+      type: string
+      value: ${{ steps.triggerPipeline.output.pipelineUrl }}
+    executionId:
+      title: Execution ID
+      description: The execution ID of the pipeline run
+      type: string
+      value: ${{ steps.pollPipelineExecution.output.executionId }}
+    outputVariables:
+      title: Output Variables
+      description: Variables returned by the pipeline execution
+      type: object
+      value: ${{ steps.pollPipelineExecution.output.outputVariables }}

@@ -1,0 +1,68 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: harness-pipeline-template
+  title: Harness Pipeline Template
+  description: Template demonstrating how to trigger a Harness Pipeline and poll for its completion
+spec:
+  owner: user:default/harness-user
+  type: service
+  parameters:
+    - title: Pipeline Information
+      required:
+        - pipelineUrl
+      properties:
+        pipelineUrl:
+          title: Pipeline URL
+          type: string
+          description: URL of the Harness pipeline to trigger
+        apiKey:
+          title: API Key
+          type: string
+          description: Harness API key (optional if environment variable is set)
+          ui:field: password
+        apiKeySecret:
+          title: API Key Secret
+          type: string
+          description: Name of the secret containing Harness API key
+        inputParameters:
+          title: Input Parameters
+          type: object
+          description: Input parameters for the pipeline
+        hidePipelineURLLog:
+          title: Hide Pipeline URL in Logs
+          type: boolean
+          description: Whether to hide pipeline URL in logs
+          default: false
+
+  steps:
+    - id: triggerPipeline
+      name: Trigger Harness Pipeline
+      action: trigger:harness-custom-pipeline
+      input:
+        url: ${{ parameters.pipelineUrl }}
+        apikey: ${{ parameters.apiKey }}
+        apiKeySecret: ${{ parameters.apiKeySecret }}
+        hidePipelineURLLog: ${{ parameters.hidePipelineURLLog }}
+        inputset: ${{ parameters.inputParameters }}
+
+    - id: pollPipelineExecution
+      name: Wait for Pipeline Completion
+      action: poll:harness-pipeline-execution
+      input:
+        pollingApiUrl: ${{ steps.triggerPipeline.output.pollingApiUrl }}
+        pipelineUrl: ${{ steps.triggerPipeline.output.pipelineUrl }}
+        apikey: ${{ parameters.apiKey }}
+        apiKeySecret: ${{ parameters.apiKeySecret }}
+        accountIdentifier: ${{ steps.triggerPipeline.output.accountIdentifier }}
+        showOutputVariables: true
+        outputVariableParams:
+          orgIdentifier: ${{ steps.triggerPipeline.output.orgIdentifier }}
+          projectIdentifier: ${{ steps.triggerPipeline.output.projectIdentifier }}
+          branchName: ${{ steps.triggerPipeline.output.branchName }}
+          repoIdentifier: ${{ steps.triggerPipeline.output.repoIdentifier }}
+
+  output:
+    links:
+      - title: Pipeline Execution
+        url: ${{ steps.triggerPipeline.output.pipelineUrl }}

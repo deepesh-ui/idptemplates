@@ -82,23 +82,9 @@ spec:
           ${{ steps.pollPipelineExecution.output.outputVariables | dump }}
 
   output:
-    pipelineStatus:
-      title: Pipeline Execution Status
-      description: The status of the pipeline execution
-      type: string
-      value: ${{ steps.pollPipelineExecution.output.status }}
-    pipelineUrl:
-      title: Pipeline URL
-      description: URL to view the pipeline execution
-      type: string
-      value: ${{ steps.triggerPipeline.output.pipelineUrl }}
-    executionId:
-      title: Execution ID
-      description: The execution ID of the pipeline run
-      type: string
-      value: ${{ steps.pollPipelineExecution.output.executionId }}
-    outputVariables:
-      title: Output Variables
-      description: Variables returned by the pipeline execution
-      type: object
-      value: ${{ steps.pollPipelineExecution.output.outputVariables }}
+    links:
+      - title: Pipeline Execution
+        url: ${{ steps.triggerPipeline.output.pipelineUrl }}
+    pipelineStatus: ${{ steps.pollPipelineExecution.output.status }}
+    pipelineUrl: ${{ steps.triggerPipeline.output.pipelineUrl }}
+    executionId: ${{ steps.pollPipelineExecution.output.executionId }}

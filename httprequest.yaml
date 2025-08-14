@@ -19,12 +19,15 @@ spec:
           example: octocat
 
   steps:
-    - id: getUser
-      name: Fetch GitHub User
-      action: http:backstage:request
+    - id: callGitHub
+      name: Get GitHub User
+      action: http:request
       input:
         method: GET
-        path: /proxy/github-api/users/${{ parameters.username }}
+        url: https://api.github.com/users/${{ parameters.username }}
+        headers:
+          Accept: application/vnd.github.v3+json
+          User-Agent: backstage-scaffolder
 
     - id: logUser
       name: Log User Details

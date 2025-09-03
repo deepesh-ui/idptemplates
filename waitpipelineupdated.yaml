@@ -12,6 +12,9 @@ spec:
         message:
           title: Message
           type: string
+        messagetwo:
+          title: Message two
+          type: string          
         token:
           title: Harness Token
           type: string
@@ -32,7 +35,7 @@ spec:
       input:
         url: https://qa.harness.io/ng/account/px7xd_BFRCi-pfWPYXVjvw/module/cd/orgs/default/projects/Deepesh_CDE/pipelines/WaitPipeline/pipeline-studio/?storeType=INLINE
         inputset: 
-          "message": ${{ parameters.message }}
+          "message": ${{ parameters.messagetwo }}
         apikey: ${{ parameters.token }}        
   output:
     links:

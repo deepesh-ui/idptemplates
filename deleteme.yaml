@@ -1,0 +1,134 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: CNE-GCP-APP-ONBOARDING-Self-Service-V2
+  title: GCP App Onboarding Self Service
+  description: >
+     **Important Information for GCP App Onboarding:**
+
+      - **PublicCertName**:
+        - External Facing Certificate Name for your application. Make sure this Certificate Name is unique & not used elsewhere in Transunion.
+        - The External Certificate Name & External FQDN Name will be same.
+        - The example External Certificate/FQDN can be abc.transunion.com
+      - **PrivateCertName**:
+        - Internal Certificate Name for your application.
+        - Internal Certificate Name & Internal FQDN Name will be same.
+        - The example Internal Certificate/FQDN can be abc.transu.net.
+      - **InternalLB**:
+        - Internal LoadBalancer FQDN or IP Address.
+        - Make sure LoadBalancer FQDN has a 'A' Record Created in DNS BeforeHand else the automation may fail.
+        - The example LoadBalancer FQDN can be abc.transu.net.
+        - The example LoadBalancer IP can be 10.50.1.10.
+      - **Region**: 
+          - Choice the Region where you want to deploy your application - USC1/US (US Central-1),NANE1/Canada (North America NorthEast-1), EUW2/London (Europe West-2)
+      - **Environment**:
+        - Choice the Environment (Prod or NonProd).
+      - **Tier**:
+        - Choice the Application Tier (Tier1 or Tier2 or Tier3).
+      - **BU_EMAIL**:
+        - Enter your Email PDL.
+      - **Note**:
+        -  For exceptions, please click here [Under Development]
+      - **Useful Links/Documentation**:
+        - GCP External Application Onboarding Process("https://transunion.atlassian.net/wiki/spaces/GTGNE/pages/2545977029/GCP+Ingress+External+Application+Onboarding+Automation")
+        - GCP External Application Onboarding Process (How-To-Use) ("https://transunion.atlassian.net/wiki/spaces/GTGNE/pages/2546043324/How+to+Use+-+GCP+Ingress+External+Application+Onboarding+Automation")
+  tags:
+    - gcp-app-onboarding
+    - harness
+spec:
+  owner: group:default/HSF_Admins
+  type: harness_project
+  parameters:
+    - title: CNE GCP App Onboarding Details
+      required:
+        - PublicCertName
+        - PrivateCertName
+        - InternalLB
+        - Region
+        - Environment
+        - Tier
+        - BU_EMAIL
+      properties:
+        Tier:
+          title: Application Tier
+          type: string
+          description: Choice your application tier
+          ui:autofocus: true
+          enum:
+          - tier1
+          - tier2
+          - tier3
+          enumNames:
+          - tier1
+          - tier2
+          - tier3
+        Environment:
+          title: Application Environment
+          type: string
+          description: Choice your application Environment
+          ui:autofocus: true
+          enum:
+          - prod
+          - nonprod
+          enumNames:
+          - prod
+          - nonprod
+        Region:
+          title: Application Region
+          type: string
+          description: Choice your Application Region
+          ui:autofocus: true
+          enum:
+          - usc1
+          - nane1
+          - euw2
+          enumNames:
+          - usc1
+          - nane1
+          - euw2
+        PublicCertName:
+          title: Public Cert Name
+          type: string
+          description: Type in the Public Cert Name for your application
+        BU_EMAIL:
+          title: Business Unit PDL
+          type: string
+          description: Type in your Business Unit PDL
+        PrivateCertName:
+          title: Private Cert Name
+          type: string
+          description: Type in the Private Cert Name for your application
+        InternalLB:
+          title: Internal LoadBalancer FQDN/IP
+          type: string
+          description: Type in the Internal LoadBalancer FQDN/IP for your application
+        token:
+          title: Harness Token
+          type: string
+          ui:widget: password
+          ui:field: HarnessAuthToken
+      errorMessage:
+        properties:
+          Tier: Please select the Tier.
+          InternalLB: Please enter a valid Internal LoadBalancer FQDN/IP for your application.
+          PrivateCertName: Please enter a valid Private Cert Name for your application.
+          PublicCertName: Please enter a valid Public Cert Name for your application..
+          BU_EMAIL: Please enter a valid Business Unit PDL.
+          Region: Please select a Region.
+          Environment: Please select a Environment.
+  
+  steps:
+    - id: configure_workspace
+      name: Configuring Harness Workspace
+      action: trigger:harness-custom-pipeline
+      input:
+        url: https://transunion.harness.io/ng/account/HgTKqISVTX-kQSVsWCHEcA/module/ci/orgs/OneDev/projects/Public_Cloud_Network_Platform_Services/pipelines/gcpingressapponboardingpipeline01/pipeline-studio/?storeType=REMOTE&connectorRef=&repoName=gcp-application-onboarding&branch=master
+        inputset:  
+          Tier: ${{ parameters.Tier }}
+          InternalLB: ${{ parameters.InternalLB }}
+          PrivateCertName: ${{ parameters.PrivateCertName }}
+          PublicCertName: ${{ parameters.PublicCertName }}
+          BU_EMAIL: ${{ parameters.BU_EMAIL }}
+          Region: ${{ parameters.Region }}
+          Environment: ${{ parameters.Environment }}
+        apikey: ${{ parameters.token }}

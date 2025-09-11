@@ -1,38 +1,36 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: x-api-key-new
-  title: Deploy service using x-api-key new
+  name: abcdef
+  title: ABCDEF
   description: A template to Deploy service
 spec:
   owner: deepesh.kumar@harness.io
   type: service
   parameters:
-    - title: Deploy service
-      required:
-        - username
-        - version
+    - title: Test service
       properties:
-        name:
-          title: Select environments
-          type: array
-          items:
-            type: string
-            enum:
-              - production
-              - staging
-              - development
-          uniqueItems: true
-          ui:widget: checkboxes       
-        username:
-          title: Username
+        name1:
+          title: placeholder Test
           type: string
-        version:
-          title: Version
+          description: Unique name of the component
+          ui:placeholder: Sample S3 bucket Name enz-bucket-name-useast2-dev
+        readonlyTest:
+          title: Readonly Test
           type: string
-        apiKeySecret:  
-          title: API Key Secret
-          type: string
+          description: Unique name of the component
+          default: muni
+          ui:readonly: true      
+        encryptionTypes:
+          title: S3 Encryption Types (Existing Key)
+          type: boolean
+          oneOf:
+            - title: Existing Key
+              const: true
+            - title: New Key
+              const: false
+          ui:widget: radio
+          default: true 
            
   steps:
     - id: trigger

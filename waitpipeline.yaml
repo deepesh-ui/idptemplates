@@ -25,8 +25,7 @@ spec:
         projectId: Deepesh_CDE
         orgId: default
         secretValue: Deepesh
-        apikey: ${{ parameters.token }}            
-  steps:
+        apikey: ${{ parameters.token }}  
     - id: trigger
       name: Run Wait Pipeline
       action: trigger:harness-custom-pipeline

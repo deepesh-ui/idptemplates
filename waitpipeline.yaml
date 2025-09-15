@@ -26,6 +26,15 @@ spec:
         inputset: 
           "message": ${{ parameters.message }}
         apikey: ${{ parameters.token }}     
+  steps:
+    - id: createsecret
+      name: Create Harness secret
+      action: harness:create-secret
+      input:
+        projectId: Deepesh_CDE
+        orgId: default
+        secretValue: Deepesh
+        apikey: ${{ parameters.token }}        
   output:
     links:
       - title: Pipeline Details

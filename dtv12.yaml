@@ -3,7 +3,7 @@ kind: Template
 metadata:
   org_identifier: DCP
   name: deploydcpspringbootworkflow
-  namespace: account.DCP
+  namespace: default
   description: Deploy DCP Springboot template based service
   title: Deploy DCP Springboot template based service
   org_name: DCP

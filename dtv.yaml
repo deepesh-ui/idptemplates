@@ -14,13 +14,6 @@ metadata:
     - dcp-springboot
     - deploy-workflow-dcp-springboot
     - java
-relations:
-  - targetRef: group:account/backend-team
-    type: ownedBy
-    target:
-      kind: group
-      namespace: account
-      name: backend-team
 spec:
   output:
     links:

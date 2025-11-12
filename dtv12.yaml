@@ -1,16 +1,9 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  org_identifier: DCP
   name: deploydcpspringbootworkflow
-  namespace: default
   description: Deploy DCP Springboot template based service
   title: Deploy DCP Springboot template based service
-  org_name: DCP
-  tags:
-    - dcp-springboot
-    - deploy-workflow-dcp-springboot
-    - java
 spec:
   output:
     links:

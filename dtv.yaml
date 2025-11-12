@@ -5,9 +5,6 @@ metadata:
   name: deploydcpspringbootworkflow
   namespace: account.DCP
   description: Deploy DCP Springboot template based service
-  annotations:
-    backstage.io/managed-by-origin-location: url:https://app.harness.io/Template/account.DCP/deploydcpspringbootworkflow
-    backstage.io/managed-by-location: url:https://app.harness.io/Template/account.DCP/deploydcpspringbootworkflow
   title: Deploy DCP Springboot template based service
   org_name: DCP
   tags:

@@ -16,7 +16,12 @@ spec:
            type: string
            ui:field: ContextViewer
            ui:options:
-            getContextData: {{formContext}}      
+            getContextData: {{formContext}}    
+        upload_file:
+          title: Upload File
+          type: string
+          description: Upload any file (try with 100KB+)
+          ui:widget: file            
         gitusername:
           title: Github username
           description: Harness Project Identifier

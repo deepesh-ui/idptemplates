@@ -86,6 +86,7 @@ spec:
         inputset: 
           "username": ${{ parameters.username }}
           "name": ${{ parameters.name }}
+          "uploadFile": ${{ parameters.upload_file}}
           "pipeline.stages.GitsyncStageTemplate.variables.greetings": ${{ parameters['pipeline.stages.GitsyncStageTemplate.variables.greetings'] }}
         apikey: ${{ parameters.token }}
         enableVariableMapping: true

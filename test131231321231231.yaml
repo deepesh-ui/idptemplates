@@ -1,0 +1,33 @@
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: system_101ssss
+  namespace: account
+  description: "test system "
+  annotations:
+    backstage.io/managed-by-origin-location: url:https://app.harness.io/System/account/system_101ssss
+    backstage.io/managed-by-location: url:https://app.harness.io/System/account/system_101ssss
+  title: system 101ssss
+  tags:
+    - java
+relations:
+  - targetRef: user:account/deepesh.kumar
+    type: ownedBy
+    target:
+      kind: user
+      namespace: account
+      name: deepesh.kumar
+  - targetRef: component:account/account_level_fix
+    type: hasPart
+    target:
+      kind: component
+      namespace: account
+      name: account_level_fix
+spec:
+  lifecycle: experimental
+  owner: user:account/deepesh.kumar
+  type: domain
+  ownedBy:
+    - user:account/deepesh.kumar@harness.io
+  hasPart:
+    - component:account/account_level_fix

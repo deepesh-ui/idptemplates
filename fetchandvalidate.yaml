@@ -10,6 +10,13 @@ spec:
   parameters:
     - title: Fill in some steps
       properties:
+        formContext:
+           title: Live Form Context
+           description: DEBUG Context
+           type: string
+           ui:field: ContextViewer
+           ui:options:
+            getContextData: {{formContext}}      
         gitusername:
           title: Github username
           description: Harness Project Identifier

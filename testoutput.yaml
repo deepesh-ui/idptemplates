@@ -39,4 +39,5 @@ spec:
         apiKeySecret: harness_apikey
         content: |
           url: ${{ steps.provision_workspace.output.PipelineUrl }}
-          Output Variable o is: `${{ steps.provision_workspace.output['pipeline.stages.deploy.spec.execution.steps.ShellScript_1.output.outputVariables.some_stat'] }}` 
+          Output Variable some_stat is: `${{ steps.provision_workspace.output['pipeline.stages.deploy.spec.execution.steps.ShellScript_1.output.outputVariables.some_stat'] }}`
+          Output Variable pipelinevaroutput is: `${{ steps.provision_workspace.output['pipeline.stages.deploy.spec.execution.steps.ShellScript_1.output.outputVariables.pipelinevaroutput'] }}`

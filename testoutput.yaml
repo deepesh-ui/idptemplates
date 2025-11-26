@@ -30,6 +30,7 @@ spec:
       input:
         url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/module/idp-admin/orgs/default/projects/Deepesh_CDE/pipelines/testoutputwithremote/pipeline-studio/?branch=main&repoName=deepesh-templates&connectorRef=&storeType=REMOTE
         inputset:
+          test: ${{ parameters.user }}
           version: 5
           tokensecret: ${{ parameters.tokensecret }}
         apiKeySecret: Deepesh_X_API_Key

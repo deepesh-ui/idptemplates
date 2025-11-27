@@ -30,12 +30,20 @@ spec:
       input:
         url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/module/idp-admin/orgs/default/projects/Deepesh_CDE/pipelines/testoutputwithremote/pipeline-studio/?branch=main&repoName=deepesh-templates&connectorRef=&storeType=REMOTE
         inputset:
-          test: ${{ parameters.user }}
           version: 5
           tokensecret: ${{ parameters.tokensecret }}
         apiKeySecret: Deepesh_X_API_Key
         showOutputVariables: true
-        retry: ${{ parameters }}
+    - id: retryworkflowfromstage
+      name: retry pipeline from stage
+      action: trigger:harness-custom-pipeline
+      input:
+        url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/all/orgs/default/projects/Deepesh_CDE/pipelines/Build_deepesh_templates_1754479061798/pipeline-studio/?storeType=REMOTE&connectorRef=&repoName=deepesh-templates&branch=main
+        inputset:
+          version: 5
+          tokensecret: ${{ parameters.tokensecret }}
+        apiKeySecret: Deepesh_X_API_Key
+        showOutputVariables: true        
   output:
     text:
       - title: Outputs

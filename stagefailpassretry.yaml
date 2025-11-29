@@ -22,7 +22,7 @@ spec:
         status:
           title: Status
           type: string
-          description: Selectstatus pass or fail
+          description: Selectstatus pass or fail       
   steps:  
     - id: provision_workspace
       name: Onboarding user
@@ -32,7 +32,7 @@ spec:
         inputset:
           stage_behavior: pass
           tokensecret: ${{ parameters.tokensecret }}
-        apiKeySecret: Deepesh_X_API_Key
+        apikey: ${{ parameters.token }}
         showOutputVariables: true
     - id: retryworkflowfromstage
       name: retry pipeline from stage
@@ -41,9 +41,8 @@ spec:
         url: https://qa.harness.io/ng/account/px7xd_BFRCi-pfWPYXVjvw/module/cd/orgs/default/projects/Deepesh_CDE/pipelines/Fail_Stage/pipeline-studio/?storeType=INLINE&stageId=CS2&sectionId=EXECUTION
         inputset:
           stage_behavior: ${{ parameters.status }}
-          tokensecret: ${{ parameters.tokensecret }}
-        apiKeySecret: Deepesh_X_API_Key
         showOutputVariables: true        
+        apikey: ${{ parameters.token }}  
   output:
     text:
       - title: Outputs

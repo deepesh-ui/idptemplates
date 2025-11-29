@@ -1,0 +1,52 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+# some metadata about the template itself
+metadata:
+  name: stage-fail-pass-retry
+  title: stage-fail-pass-retry
+  description: stage-fail-pass-retry
+  tags:
+    - harness
+    - "30"
+spec:
+  owner: group:default/HSF_Admins
+  type: harness_project
+  parameters:
+    - title: User Onboarding Details
+      properties:
+        token:
+          title: Harness Token
+          type: string
+          ui:widget: password
+          ui:field: HarnessAuthToken
+        status:
+          title: Status
+          type: string
+          description: Selectstatus pass or fail
+  steps:  
+    - id: provision_workspace
+      name: Onboarding user
+      action: trigger:harness-custom-pipeline
+      input:
+        url: https://qa.harness.io/ng/account/px7xd_BFRCi-pfWPYXVjvw/module/cd/orgs/default/projects/Deepesh_CDE/pipelines/Fail_Stage/pipeline-studio/?storeType=INLINE&stageId=CS2&sectionId=EXECUTION
+        inputset:
+          stage_behavior: pass
+          tokensecret: ${{ parameters.tokensecret }}
+        apiKeySecret: Deepesh_X_API_Key
+        showOutputVariables: true
+    - id: retryworkflowfromstage
+      name: retry pipeline from stage
+      action: trigger:harness-custom-pipeline
+      input:
+        url: https://qa.harness.io/ng/account/px7xd_BFRCi-pfWPYXVjvw/module/cd/orgs/default/projects/Deepesh_CDE/pipelines/Fail_Stage/pipeline-studio/?storeType=INLINE&stageId=CS2&sectionId=EXECUTION
+        inputset:
+          stage_behavior: ${{ parameters.status }}
+          tokensecret: ${{ parameters.tokensecret }}
+        apiKeySecret: Deepesh_X_API_Key
+        showOutputVariables: true        
+  output:
+    text:
+      - title: Outputs
+        apiKeySecret: harness_apikey
+        content: |
+          url: ${{ steps.provision_workspace.output.PipelineUrl }}

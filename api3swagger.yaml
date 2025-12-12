@@ -1,0 +1,30 @@
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: sample-openapi-three
+  description: A sample OpenAPI 3.0 definition
+spec:
+  type: openapi
+  lifecycle: production
+  owner: user:example
+  definition: |
+      openapi: 3.0.0
+      info:
+        title: Sample API
+        description: A simple OpenAPI 3.0 API definition
+        version: 1.0.0
+      paths:
+        /hello:
+          get:
+            summary: Returns a greeting
+            responses:
+              '200':
+                description: A greeting message
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                          example: Hello, world!

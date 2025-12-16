@@ -38,7 +38,7 @@ spec:
             valueSelector: id
             labelSelector: name
             # These user fields will be appended as headers to the API request
-            appendUserData:
+            appendUser:
               - userEmail
               - uid
               - name

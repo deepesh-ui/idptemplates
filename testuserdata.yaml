@@ -12,7 +12,7 @@ spec:
   userFieldMapping:
     userEmail: email      # formContext.user.userEmail
     name: name            # formContext.user.name
-    uid: uuid             # formContext.user.uid
+            # formContext.user.uid
 
   parameters:
     - title: Test User Context

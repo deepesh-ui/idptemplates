@@ -36,9 +36,10 @@ spec:
             description: Choose a user from JSONPlaceholder
             path: /api/proxy/jsonplaceholder/users
             appendUser:
-              - userEmail
-              - uid
-              - name
+              data:
+                - userEmail
+                - uid
+                - name
 
   steps:
     - id: log

@@ -20,6 +20,12 @@ spec:
       required:
         - testField1
       properties:
+        deubgdata:
+          title: User Email
+          type: string
+          ui:field: ContextViewer
+          ui:options: 
+            getContextData: ${{formContext}}      
         testField1:
           title: Select a User (with user context in headers)
           type: string

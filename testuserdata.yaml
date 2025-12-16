@@ -25,7 +25,7 @@ spec:
           type: string
           ui:field: ContextViewer
           ui:options: 
-            getContextData: {{formContext}}      
+            getContextData: ${{formContext}}      
         testField1:
           title: Select a User (with user context in headers)
           type: string

@@ -35,33 +35,10 @@ spec:
             title: Select User
             description: Choose a user from JSONPlaceholder
             path: /api/proxy/jsonplaceholder/users
-            valueSelector: id
-            labelSelector: name
-            # These user fields will be appended as headers to the API request
             appendUser:
               - userEmail
               - uid
               - name
-
-        testField2:
-          title: Select a Post (no user context)
-          type: string
-          description: This field will NOT send user context headers
-          ui:field: SelectFieldFromApi
-          ui:options:
-            title: Select Post
-            description: Choose a post from JSONPlaceholder
-            path: /api/proxy/jsonplaceholder/posts
-            arraySelector: .
-            valueSelector: id
-            labelSelector: title
-            # No appendUserData specified - no user headers sent
-
-        displayUserInfo:
-          title: Current User Information
-          type: string
-          description: "Email: Check browser DevTools > Network > users request > Headers to see userEmail, uid, name"
-          default: "Check Network tab to verify headers!"
 
   steps:
     - id: log

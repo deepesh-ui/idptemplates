@@ -40,6 +40,8 @@ spec:
                 - userEmail
                 - uid
                 - name
+              location:
+                - query
 
   steps:
     - id: log

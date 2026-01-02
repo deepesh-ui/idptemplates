@@ -2,6 +2,8 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: checkout-service
+  annotations:
+    subid: 8b70b453-5787-4b3f-b959-3ec80eaf8e31  
 spec:
   type: service
   lifecycle: production

@@ -6,13 +6,6 @@ metadata:
   annotations:
     subid: 8b70b453-5787-4b3f-b959-3ec80eaf8e31
   title: TestPedro
-relations:
-  - targetRef: group:account/_account_all_users
-    type: ownedBy
-    target:
-      kind: group
-      namespace: account
-      name: _account_all_users
 spec:
   lifecycle: prod
   type: ezworkspace03

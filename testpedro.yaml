@@ -1,0 +1,21 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: Test_Pedro2
+  namespace: account
+  annotations:
+    subid: 8b70b453-5787-4b3f-b959-3ec80eaf8e31
+    backstage.io/managed-by-origin-location: url:https://app.harness.io/Component/account/Test_Pedro2
+    backstage.io/managed-by-location: url:https://app.harness.io/Component/account/Test_Pedro2
+  title: TestPedro
+relations:
+  - targetRef: group:account/_account_all_users
+    type: ownedBy
+    target:
+      kind: group
+      namespace: account
+      name: _account_all_users
+spec:
+  lifecycle: prod
+  type: ezworkspace03
+  owner: group:account/_account_all_users

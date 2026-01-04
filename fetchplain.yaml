@@ -1,0 +1,22 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: simple-file-template
+  title: Simple File Template
+  description: Creates a README file in the workspace.
+spec:
+  owner: user:guest
+  type: service
+
+  steps:
+    - id: create-file
+      name: Create README
+      action: fetch:plain
+      input:
+        url: https://raw.githubusercontent.com/github/gitignore/main/README.md
+        targetPath: ./README.md
+
+  output:
+    links:
+      - title: View README
+        url: ./README.md

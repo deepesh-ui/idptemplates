@@ -15,6 +15,7 @@ spec:
         username:
           title: Username
           type: string
+          pattern: "^[a-z0-9-]+$"
         apiKeySecret:  
           title: API Key Secret
           type: string

@@ -1,0 +1,88 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: custom-field-demo
+  title: Custom Field Demo
+  description: Demonstrates harnesstext custom fields with validation
+spec:
+  owner: platform-team
+  type: service
+
+  parameters:
+    - title: Fill in some steps
+      required:
+        - projectName
+        - resourceNameadsa
+        - resourceName
+      properties:
+        projectName:
+          type: string
+          minLength: 1
+          ui:field: CustomField
+          ui:options:
+            fieldType: harnesstext
+            title: Project Name
+            description: Enter a valid Harness email address
+            placeholder: user@harness.io
+            validation:
+              type: regex
+              pattern: ^[a-zA-Z0-9._%+-]+@harness\.io$
+              errorMessage: Email must end with @harness.io
+              validateOnChange: true
+              debounceMs: 300
+              required: true
+        resourceNameadsa:
+          type: string
+          minLength: 1
+          ui:field: CustomField
+          ui:options:
+            fieldType: harnesstext
+            title: Resource Name
+            description: Enter a resource name
+            placeholder: my-resource
+            validation:
+              type: api
+              required: true
+              validateOnChange: true
+              debounceMs: 500
+              apiConfig:
+                path: /api/projects/validate-resource
+                method: POST
+                errorPath: error
+                successPath: valid
+        resourceName:
+          type: string
+          minLength: 1
+          ui:field: CustomField
+          ui:options:
+            fieldType: harnesstext
+            title: Resource Name
+            description: Enter a resource name
+            placeholder: my-resource
+            validation:
+              type: api
+              required: true
+              validateOnChange: false
+              errorMessage: Project name is already taken
+              apiConfig:
+                path: /api/projects/validate-resource
+                method: POST
+                errorPath: error
+                successPath: valid
+              validationButton:
+                label: Check Availability
+                variant: outlined
+  steps:
+    - id: log
+      name: Log Values
+      action: debug:log
+      input:
+        message: |
+          projectName: ${{ parameters.projectName }}
+          resourceNameadsa: ${{ parameters.resourceNameadsa }}
+          resourceName: ${{ parameters.resourceName }}
+
+  output:
+    links:
+      - title: Open
+        url: ${{ steps.log.output.message }}

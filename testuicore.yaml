@@ -5,6 +5,7 @@ metadata:
   title: Validate Harness Widgets
   description: Sample form to test Harness UICore widgets (text, select, checkbox, textarea, password)
 spec:
+  type: service
   parameters:
     - title: Harness Widgets Validation
       required:

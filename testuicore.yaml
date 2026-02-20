@@ -78,7 +78,7 @@ spec:
           type: string
           title: Secret key
           description: Password field (masked)
-          ui:widget: password
+          ui:field: Secret
 
         # Optional (no validation) - still uses HarnessTextWidget
         optionalField:

@@ -1,0 +1,93 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: validate-harness-widgets
+  title: Validate Harness Widgets
+  description: Sample form to test Harness UICore widgets (text, select, checkbox, textarea, password)
+spec:
+  parameters:
+    - title: Harness Widgets Validation
+      required:
+        - serviceName
+        - environment
+        - acceptTerms
+      properties:
+        # --- HarnessTextWidget (BaseInputTemplate) ---
+        serviceName:
+          type: string
+          title: Service Name
+          description: Single-line text (Harness TextInput)
+          minLength: 2
+          pattern: "^[a-z][a-z0-9-]*$"
+        repoUrl:
+          type: string
+          title: Repository URL
+          description: Another text field
+          format: uri
+
+        # --- HarnessSelectWidget ---
+        environment:
+          type: string
+          title: Environment
+          description: Dropdown (Harness Select)
+          enum:
+            - dev
+            - staging
+            - prod
+          enumNames:
+            - Development
+            - Staging
+            - Production
+        region:
+          type: string
+          title: Region
+          enum:
+            - us-east-1
+            - us-west-2
+            - eu-west-1
+
+        # --- HarnessCheckboxWidget ---
+        acceptTerms:
+          type: boolean
+          title: Accept terms and conditions
+          description: Boolean (Harness Checkbox)
+          default: false
+        enableMonitoring:
+          type: boolean
+          title: Enable monitoring
+          default: true
+
+        # --- HarnessTextareaWidget ---
+        description:
+          type: string
+          title: Description
+          description: Multi-line text (Harness Textarea)
+          ui:widget: textarea
+          ui:options:
+            rows: 5
+        notes:
+          type: string
+          title: Additional notes
+          ui:widget: textarea
+          ui:options:
+            rows: 3
+
+        # --- PasswordWidget ---
+        secretKey:
+          type: string
+          title: Secret key
+          description: Password field (masked)
+          ui:widget: password
+
+        # Optional (no validation) - still uses HarnessTextWidget
+        optionalField:
+          type: string
+          title: Optional field
+          description: Optional text, no validation
+
+  steps:
+    - id: validate-widgets
+      name: Validate Widgets
+      action: debug:log
+      input:
+        message: "Service: ${{ parameters.serviceName }}, Env: ${{ parameters.environment }}, Accept: ${{ parameters.acceptTerms }}"

@@ -1,0 +1,47 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: harness-text-widget-test
+  title: HarnessTextWidget Test
+  description: Test template for HarnessTextWidget with live validation
+spec:
+  owner: guest
+  type: service
+  parameters:
+    - title: Basic Validation
+      required:
+        - serviceName
+        - repoUrl
+      properties:
+        serviceName:
+          type: string
+          title: Service Name
+          description: Lowercase alphanumeric with hyphens, min 3 chars
+          minLength: 3
+          pattern: "^[a-z][a-z0-9-]*$"
+        repoUrl:
+          type: string
+          title: Repository URL
+          description: Must be a valid URI
+          format: uri
+        optionalField:
+          type: string
+          title: Optional Field
+          description: This field has no validation — should never show errors
+    - title: Length Constraints
+      required:
+        - shortCode
+      properties:
+        shortCode:
+          type: string
+          title: Short Code
+          description: Exactly 3-5 characters
+          minLength: 3
+          maxLength: 5
+        bio:
+          type: string
+          title: Bio
+          description: Max 50 characters
+          maxLength: 50
+  steps: []
+  output: {}

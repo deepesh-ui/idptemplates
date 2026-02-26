@@ -1,0 +1,44 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: github-user-details-123
+  title: Get GitHub User Details 1234
+  description: Fetch details of a GitHub user via the Backstage proxy.
+spec:
+  owner: my-team
+  type: service
+
+  parameters:
+    - title: GitHub Username
+      required:
+        - username
+      properties:
+        username:
+          type: string
+          description: GitHub username to fetch details for
+          example: octocat
+
+  steps:
+    - id: callGitHub
+      name: Get GitHub User
+      action: http:request
+      input:
+        method: GET
+        url: https://api.github.com/users/${{ parameters.username }}
+        headers:
+          Accept: application/vnd.github.v3+json
+          User-Agent: backstage-scaffolder
+
+    - id: logUser
+      name: Log User Details
+      action: debug:log
+      input:
+        message: |
+          GitHub User: ${{ steps.getUser.output.body.login }}
+          Name: ${{ steps.getUser.output.body.name }}
+          Public Repos: ${{ steps.getUser.output.body.public_repos }}
+          Followers: ${{ steps.getUser.output.body.followers }}
+          Profile URL: ${{ steps.getUser.output.body.html_url }}
+
+  output:
+    userDetails: ${{ steps.getUser.output.body }}

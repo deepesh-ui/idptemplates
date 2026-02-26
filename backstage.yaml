@@ -1,0 +1,52 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  annotations:
+    backstage.io/managed-by-location: url:https://app.harness.io/Component/account.sandbox.AtlasOne/atlasonecartservice
+    backstage.io/managed-by-origin-location: url:https://app.harness.io/Component/account.sandbox.AtlasOne/atlasonecartservice
+    backstage.io/view-url: https://app.harness.io/Component/account.sandbox.AtlasOne/atlasonecartservice
+    backstage.io/edit-url: https://app.harness.io/ng/account/Component/module/code/repos/Component/files//Component/account.sandbox.AtlasOne/atlasonecartservice/~/
+    backstage.io/source-location: url:https://app.harness.io/ng/account/EeRjnXTnS4GrLG5VNNJZUw/module/code/orgs/demo/repos/IDP-catalog-examples/files/main/~/catalog-examples/Service/boutique/boutique_cartservice/
+    harness.io/cd-serviceId: Boutique_Cart_Service
+    harness.io/project-url: https://app.harness.io/ng/account/6_vVHzo9Qeu9fXvj-AcbCQ/home/orgs/default/projects/Platform_Demo/details
+  org_identifier: sandbox
+  description: Cart Service for the AtlasOne online store
+  hasEscalationPolicy: true
+  title: AtlasOne-cartservice
+  project_name: AtlasOne
+  isOnCallSet: true
+  project_identifier: AtlasOne
+  tags:
+    - c#
+    - store
+  usesGoldenPipeline: true
+  hasRunbook: false
+  name: atlasonecartservice
+  namespace: account.sandbox.AtlasOne
+  links:
+    - url: http://34.67.7.165/
+      title: Prod Website
+      icon: dashboard
+      type: AtlasOne FrontEnd
+    - url: http://34.28.46.65
+      title: QA Website
+      icon: dashboard
+      type: AtlasOne FrontEnd
+    - url: http://34.135.60.81/
+      title: Dev Website
+      icon: dashboard
+      type: AtlasOne FrontEnd
+  org_name: Sandbox
+  uid: efe63445-0ad7-4ef8-b7b0-6e827592ce2a
+  etag: 1957dcd652ef68154c04be7e0a958f0731113b10
+relations:
+  - type: ownedBy
+    targetRef: group:account.sandbox.atlasone/frontend systems team
+    target:
+      kind: group
+      namespace: account.sandbox.atlasone
+      name: frontend systems team
+spec:
+  lifecycle: prod
+  type: service
+  owner: Frontend Systems Team

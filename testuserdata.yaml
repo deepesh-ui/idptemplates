@@ -1,0 +1,82 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: test-user-context
+  title: Test User Context & Field Mapping
+  description: Test template to verify user field mapping and appendUserData functionality
+spec:
+  owner: platform-team
+  type: test
+
+  # Configure which user fields to fetch and expose in formContext.user
+  userFieldMapping:
+    userEmail: email      # formContext.user.userEmail
+    name: name            # formContext.user.name
+            # formContext.user.uid
+
+  parameters:
+    - title: Test User Context
+      description: This form tests the user context feature
+      required:
+        - testField1
+      properties:
+        deubgdata:
+          title: User Email
+          type: string
+          ui:field: ContextViewer
+          ui:options: 
+            getContextData: ${{formContext}}      
+        testField1:
+          title: Select a User (with user context in headers)
+          type: string
+          description: This field will send userEmail and uid as headers to the API
+          ui:field: SelectFieldFromApi
+          ui:options:
+            title: Select User
+            description: Choose a user from JSONPlaceholder
+            path: /api/proxy/jsonplaceholder/users
+            appendUser:
+              data:
+                - userEmail
+                - uid
+                - name
+              location:
+                - query
+
+  steps:
+    - id: log
+      name: Log User Context
+      action: debug:log
+      input:
+        message: |
+          User context test completed!
+          Selected User ID: ${{ parameters.testField1 }}
+          Selected Post ID: ${{ parameters.testField2 }}
+
+          Note: Check browser DevTools > Network tab to verify:
+          - Request to /api/proxy/jsonplaceholder/users should have headers: userEmail, uid, name
+          - Request to /api/proxy/jsonplaceholder/posts should NOT have user headers
+
+  output:
+    text:
+      - title: Test Complete
+        content: |
+          ## User Context Test Results
+
+          ### Selected Values:
+          - User ID: ${{ parameters.testField1 }}
+          - Post ID: ${{ parameters.testField2 }}
+
+          ### Verification Steps:
+          1. Open browser DevTools (F12)
+          2. Go to Network tab
+          3. Look for request to `/api/proxy/jsonplaceholder/users`
+          4. Check Request Headers section
+          5. You should see:
+             - `userEmail: <your-email>`
+             - `uid: <your-uid>`
+             - `name: <your-name>`
+
+          ### Expected Behavior:
+          - ✅ First field (Select User): Headers include userEmail, uid, name
+          - ✅ Second field (Select Post): Headers do NOT include user context

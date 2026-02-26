@@ -3,34 +3,51 @@ kind: Template
 metadata:
   name: test-template
   title: Test Template
-  description: A template to test
+  description: A template to Deploy service
 spec:
   owner: deepesh.kumar@harness.io
   type: service
   parameters:
     - title: Test Template
       properties:
-       zone:
-        title: Zone
-        type: string
-        description: Zone
-        ui:field: EntityPicker
-        ui:options:
-          catalogFilter:
-            - kind: Domain
-              metadata.name: non-prod
-            - kind: Domain
-              metadata.name: pre-prod
-            - kind: Domain
-              metadata.name: prod
-            - kind: Domain
-              metadata.name: disaster-recovery
-          enumMap:
-            non-prod: TESTNPD
-            pre-prod: TESTPPD
-            prod: TESTPRD
-            disaster-recovery: TESTDR
+       repositoryname:
+         type: string
+         ui:field: SelectFieldFromApi
+         ui:options:
+           title: Select the Name of the repository where your application's source code is stored from the Dropdown List
+           description: Enter the Name of the repository where your application's source code is stored
+           allowArbitraryValues: true
+           path: "proxy/github-repo-search/search/repositories"
+           params:
+             q: "org:United-Airlines-Org {{parameters.searchTerm}}"
+             per_page: "100"
+           arraySelector: items
+           valueSelector: name
+           labelSelector: name
+       gittag:
+         type: string
+         ui:field: SelectFieldFromApi
+         ui:options:
+           title: Select the Git Tag for your application
+           description: Choose the specific tag from the selected repository for compilation and build - CI.
+           path: proxy/github-repo-search/repos/United-Airlines-Org/{{parameters.repositoryname}}/tags
+           valueSelector: name
+           labelSelector: name
+    - title: Test Template 1
+      properties:
+        name:
+          type: string
+          default: user
+  steps:
+    - id: trigger
+      name: Run Deploy service
+      action: trigger:harness-custom-pipeline
+      input:
+        url: https://localhost:8181/ng/account/zEaak-FLS425IEO7OLzMUg/module/cd/orgs/default/projects/Deepesh_CDE/pipelines/Idptemplate/pipeline-studio?storeType=INLINE
+        inputset:
+          "username": ${{ parameters.username }}
+        apiKeySecret: ${{ parameters.apiKeySecret }}
   output:
     links:
       - title: Pipeline Details
-        zoneVar: ${{ parameters.zone | ui:options.enumMap }}
+        url: ${{ steps.trigger.output.PipelineUrl }}        

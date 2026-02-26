@@ -1,0 +1,430 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: all-widgets-demo
+  title: All Widgets Demo Template
+  description: Demonstrates every available widget and feature in Backstage Scaffolder
+spec:
+  owner: platform-team
+  type: service
+
+  parameters:
+    # ─── Step 1: Basic Widgets (all types) ───
+    - title: All Widget Types
+      properties:
+        textField:
+          title: Text Input
+          type: string
+          description: Standard text input
+        textareaField:
+          title: Textarea
+          type: string
+          ui:widget: textarea
+          ui:options:
+            rows: 3
+        passwordField:
+          title: Password
+          type: string
+          ui:widget: password
+        emailField:
+          title: Email
+          type: string
+          format: email
+        urlField:
+          title: URL
+          type: string
+          format: uri
+        integerField:
+          title: Integer
+          type: integer
+          default: 5
+          minimum: 0
+          maximum: 100
+        numberField:
+          title: Number (float)
+          type: number
+          default: 3.14
+          multipleOf: 0.01
+        booleanField:
+          title: Checkbox Toggle
+          type: boolean
+          default: false
+        dateField:
+          title: Date
+          type: string
+          format: date
+        timeField:
+          title: Time
+          type: string
+          format: time
+        dateTimeField:
+          title: Date-Time
+          type: string
+          format: date-time
+        colorField:
+          title: Color Picker
+          type: string
+          ui:widget: color
+          default: '#0078d4'
+        rangeField:
+          title: Range Slider
+          type: integer
+          ui:widget: range
+          default: 50
+          minimum: 0
+          maximum: 100
+        fileField:
+          title: File Upload
+          type: string
+          format: data-url
+        hiddenField:
+          title: Hidden
+          type: string
+          ui:widget: hidden
+          default: secret-hidden-value
+
+    # ─── Step 2: Selection Widgets ───
+    - title: Selection Variants
+      properties:
+        selectField:
+          title: Select (dropdown)
+          type: string
+          enum:
+            - option-a
+            - option-b
+            - option-c
+          enumNames:
+            - Option A
+            - Option B
+            - Option C
+        radioField:
+          title: Radio Buttons
+          type: string
+          ui:widget: radio
+          enum:
+            - small
+            - medium
+            - large
+          enumNames:
+            - Small
+            - Medium
+            - Large
+        checkboxesField:
+          title: Checkboxes (multi-select)
+          type: array
+          uniqueItems: true
+          ui:widget: checkboxes
+          items:
+            type: string
+            enum:
+              - logging
+              - tracing
+              - metrics
+              - alerting
+        selectWithDefault:
+          title: Select with Default
+          type: string
+          default: warn
+          enum:
+            - debug
+            - info
+            - warn
+            - error
+          enumNames:
+            - Debug
+            - Info
+            - Warning
+            - Error
+
+    # ─── Step 3: ui:order & ui:options ───
+    - title: UI Order & Options
+      ui:order:
+        - thirdField
+        - firstField
+        - secondField
+        - disabledField
+        - readonlyField
+        - helpField
+        - placeholderField
+      properties:
+        firstField:
+          title: First (rendered second)
+          type: string
+          description: This should appear SECOND due to ui:order
+        secondField:
+          title: Second (rendered third)
+          type: string
+          description: This should appear THIRD due to ui:order
+        thirdField:
+          title: Third (rendered first)
+          type: string
+          description: This should appear FIRST due to ui:order
+        disabledField:
+          title: Disabled Field
+          type: string
+          default: Cannot edit this
+          ui:disabled: true
+        readonlyField:
+          title: Read-only Field
+          type: string
+          default: Read only value
+          ui:readonly: true
+        helpField:
+          title: Field with Help
+          type: string
+          ui:help: This is a help text shown below the field
+        placeholderField:
+          title: Custom Placeholder
+          type: string
+          ui:placeholder: Type something here...
+
+    # ─── Step 4: Conditional (if/then/else) ───
+    - title: Conditional Rendering
+      properties:
+        environment:
+          title: Environment
+          type: string
+          enum:
+            - development
+            - staging
+            - production
+          enumNames:
+            - Development
+            - Staging
+            - Production
+      dependencies:
+        environment:
+          oneOf:
+            - properties:
+                environment:
+                  enum:
+                    - development
+                debugMode:
+                  title: Debug Mode
+                  type: boolean
+                  default: true
+                  description: Only shown for Development
+                logLevel:
+                  title: Log Level
+                  type: string
+                  default: debug
+                  enum:
+                    - debug
+                    - trace
+              required:
+                - debugMode
+            - properties:
+                environment:
+                  enum:
+                    - staging
+                stagingCluster:
+                  title: Staging Cluster
+                  type: string
+                  description: Only shown for Staging
+                  enum:
+                    - staging-us
+                    - staging-eu
+            - properties:
+                environment:
+                  enum:
+                    - production
+                replicas:
+                  title: Production Replicas
+                  type: integer
+                  default: 3
+                  minimum: 2
+                  maximum: 20
+                  description: Only shown for Production
+                canaryPercentage:
+                  title: Canary Percentage
+                  type: integer
+                  ui:widget: range
+                  default: 10
+                  minimum: 0
+                  maximum: 100
+                  description: Only shown for Production
+
+    # ─── Step 5: oneOf / anyOf ───
+    - title: oneOf & anyOf
+      properties:
+        database:
+          title: Database Config
+          description: Select database type (oneOf)
+          oneOf:
+            - title: PostgreSQL
+              properties:
+                dbType:
+                  type: string
+                  default: postgres
+                  enum:
+                    - postgres
+                host:
+                  title: PG Host
+                  type: string
+                  default: localhost
+                port:
+                  title: PG Port
+                  type: integer
+                  default: 5432
+              required:
+                - host
+                - port
+            - title: MongoDB
+              properties:
+                dbType:
+                  type: string
+                  default: mongo
+                  enum:
+                    - mongo
+                connectionString:
+                  title: Connection String
+                  type: string
+                  description: MongoDB connection URI
+              required:
+                - connectionString
+            - title: SQLite
+              properties:
+                dbType:
+                  type: string
+                  default: sqlite
+                  enum:
+                    - sqlite
+                filePath:
+                  title: DB File Path
+                  type: string
+                  default: ./data.db
+
+    # ─── Step 6: Nested Objects & Arrays ───
+    - title: Nested & Complex
+      properties:
+        simpleArray:
+          title: Tags (string array)
+          type: array
+          description: Simple string array
+          items:
+            type: string
+        objectArray:
+          title: Environment Variables
+          type: array
+          description: Key-value pairs
+          items:
+            type: object
+            properties:
+              key:
+                title: Key
+                type: string
+              value:
+                title: Value
+                type: string
+              secret:
+                title: Is Secret
+                type: boolean
+                default: false
+        nestedObject:
+          title: Resource Limits
+          type: object
+          description: Nested object with sub-fields
+          properties:
+            cpu:
+              title: CPU
+              type: string
+              default: 500m
+            memory:
+              title: Memory
+              type: string
+              default: 256Mi
+            gpu:
+              title: GPU Enabled
+              type: boolean
+              default: false
+        deepNested:
+          title: Deployment Config
+          type: object
+          properties:
+            strategy:
+              title: Strategy
+              type: string
+              enum:
+                - rolling
+                - blue-green
+                - canary
+            healthCheck:
+              title: Health Check
+              type: object
+              properties:
+                path:
+                  title: Path
+                  type: string
+                  default: /health
+                intervalSeconds:
+                  title: Interval (s)
+                  type: integer
+                  default: 30
+                timeoutSeconds:
+                  title: Timeout (s)
+                  type: integer
+                  default: 5
+
+    # ─── Step 7: Validation & Constraints ───
+    - title: Validation & Constraints
+      properties:
+        requiredField:
+          title: Required Field
+          type: string
+          description: This field is required
+        minLengthField:
+          title: Min Length (3 chars)
+          type: string
+          minLength: 3
+          description: Minimum 3 characters
+        maxLengthField:
+          title: Max Length (10 chars)
+          type: string
+          maxLength: 10
+          description: Maximum 10 characters
+        patternField:
+          title: Pattern (letters only)
+          type: string
+          pattern: '^[a-zA-Z]+$'
+          description: Only letters allowed
+        boundedNumber:
+          title: Bounded Number (1-100)
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        multipleOfField:
+          title: Multiple of 5
+          type: integer
+          multipleOf: 5
+          default: 10
+        minMaxArray:
+          title: 2-4 Items Required
+          type: array
+          minItems: 2
+          maxItems: 4
+          items:
+            type: string
+        enumWithDefault:
+          title: Enum with Default
+          type: string
+          default: medium
+          enum:
+            - low
+            - medium
+            - high
+      required:
+        - requiredField
+        - minLengthField
+
+  steps:
+    - id: log
+      name: Log Parameters
+      action: debug:log
+      input:
+        message: 'All parameters collected successfully'
+
+  output:
+    links:
+      - title: Open README
+        url: https://backstage.io

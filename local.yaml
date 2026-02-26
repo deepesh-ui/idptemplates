@@ -1,0 +1,156 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: updatedfetchLocal
+  title: Update updated fetch Local
+  description: A template to test GitSync variables
+spec:
+  owner: deepesh.kumar@harness.io
+  type: service
+  parameters:
+    - title: Fill in some steps
+      properties:
+        gitusername:
+          title: Github username
+          description: Harness Project Identifier
+          type: string
+          default: deepesh-ui
+        custom:
+          title: GitHub Repos
+          type: string
+          description: Pick one of GitHub Repos
+          ui:field: SelectFieldFromApi
+          ui:options:
+            path: proxy/github-api/users/{{parameters.gitusername}}/repos
+            valueSelector: full_name
+            setContextData: 
+              reponame: name
+              branch: default_branch
+              type: visibility    
+              fullName: full_name
+              filteredName: "{{full_name.split('/')[0]}}"
+              owner: owner.login
+        dump:
+          title: Dump
+          description: DEBUG Context
+          type: string            
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: {{formContext}} 
+        license:
+          title: Repo Name
+          description: Harness Project Identifier
+          type: string            
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: "{{formContext.fullName.split('/')[0]}}"     
+        repositoryname:
+          title: Repo Name
+          description: Harness Project Identifier
+          type: string            
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: {{formContext.reponame}}      
+        repositorynameCapital:
+          title: Repo Name
+          description: Harness Project Identifier
+          type: string            
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: "{{formContext.reponame}}"            
+        typeName:
+          title: Visibility
+          description: Harness Project Identifier
+          type: string     
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: {{formContext.type}}                   
+    - title: Fill in some steps
+      properties:            
+        branchName:
+          title: Default Branch
+          description: Harness Project Identifier
+          type: string
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: {{formContext.branch}}         
+        repositoryvalue:
+          title: Repo Value from context
+          type: string            
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: {{formContext.formData.repositoryname}}
+        userdata:
+          title: user detail
+          type: string
+          description: Pick one of GitHub Repos
+          ui:field: ValidateAndFetch
+          ui:options:
+            path: proxy/github-api/users/{{parameters.contextvalue}}
+            setContextData: 
+              loginName: login
+              plan: plan.name
+              publicRepos: public_repos
+        entityRefs:
+          title: Entity Refs
+          type: string
+          default: user:default/autouser1
+        ownerdata:
+          title: Owner
+          type: string
+          description: Owner of the component
+          ui:field: ValidateAndFetch
+          ui:options:
+            setContextData: 
+              kind: "facets.kind"
+            path: 'catalog/entity-facets'
+            params:
+             facet: 'kind'          
+        customvalidate:
+          title: GitHub Repos Single
+          type: string
+          description: Pick one of GitHub Repos
+          ui:field: ValidateAndFetch
+          ui:options:
+            button: 
+              title: Fetch Refs
+            path: "catalog/entities/by-refs"
+            setContextData: 
+              loginName: items[0].metadata.name
+            request: 
+              method: POST
+              headers: 
+                Content-Type: application/json
+              body: 
+                entityRefs:
+                - {{parameters.entityRefs}}
+                fields:
+                - kind
+                - metadata.name               
+        gitname:
+          title: User Name
+          readonly: true
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: {{formContext.loginName}}
+          description: Harness Project Identifier
+          type: string       
+  steps:
+    - id: trigger
+      name: Writing the GitSync Variable
+      action: trigger:harness-custom-pipeline
+      input:
+        url: https://qa.harness.io/ng/account/px7xd_BFRCi-pfWPYXVjvw/module/cd/orgs/default/projects/Deepesh_CDE/pipelines/HelloWorld/pipeline-studio/?storeType=INLINE
+        # https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/module/idp-admin/orgs/default/projects/idpprojectsc/pipelines/DummyPipeline/pipeline-studio/?storeType=INLINE&stageId=DummyStage&sectionId=EXECUTION
+        inputset: 
+          "username": ${{ parameters.gitusername }}
+          "name": ${{ parameters.gitusername }}
+          "formContext": ${{ parameters.formContext }}
+          "pipeline.stages.GitsyncStageTemplate.variables.greetings": ${{ parameters['pipeline.stages.GitsyncStageTemplate.variables.greetings'] }}
+        apiKeySecret: DeepeshPipeline
+        enableVariableMapping: true
+        formContext: ${{ parameters.formContext }}
+  output:
+    links:
+      - title: Pipeline Details
+        url: ${{ steps.trigger.output.PipelineUrl }}

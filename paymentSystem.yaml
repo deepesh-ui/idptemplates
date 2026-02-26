@@ -1,0 +1,8 @@
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: payment-system
+  title: Payment System
+  description: This system groups services and libraries related to payment processing.
+spec:
+  owner: team-payment

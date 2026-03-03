@@ -225,12 +225,12 @@ spec:
           ui:widget: date-time
         maintenanceTime:
           ui:widget: time
-        configUpload:
-          ui:widget: file
-        multiFileUpload:
-          ui:widget: file
-          ui:options:
-            accept: ".pem,.crt,.key"
+        # configUpload:
+        #   ui:widget: file
+        # multiFileUpload:
+        #   ui:widget: file
+        #   ui:options:
+        #     accept: ".pem,.crt,.key"
 
     # ====================================================================
     # STEP 4 — Dependencies & Conditional Rendering

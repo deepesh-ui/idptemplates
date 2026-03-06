@@ -635,22 +635,6 @@ spec:
         - dbConfig
         - pgConfig
         - cacheLayer
-      ui:
-        databaseRequired:
-          ui:widget: checkbox
-        dbEngine:
-          ui:widget: select
-          ui:placeholder: "Select database engine..."
-        dbConfig:
-          port:
-            ui:widget: updown
-        pgConfig:
-          maxConnections:
-            ui:widget: updown
-          statementTimeout:
-            ui:widget: updown
-        cacheLayer:
-          ui:widget: radio
 
   steps:
     - id: log

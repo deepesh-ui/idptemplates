@@ -1,0 +1,794 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: live-validation-stress-test
+  title: "Live Validation Stress Test — Max Complexity"
+  description: >
+    A single template that exercises every conditional schema pattern present
+    across all 67 DirectTV templates: nested oneOf chains (4 levels deep),
+    allOf if/then/else inside object schemas, ContextViewer-driven dependencies,
+    multiple simultaneous dependencies on the same step, boolean checkboxes,
+    pattern/minLength/maxLength validators, hidden fields, API-driven selects,
+    and multi-step form state carry-over.
+  tags:
+    - live-validation-test
+    - stress-test
+
+spec:
+  owner: backend-team
+  type: service
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # STEP 1 — Environment & Branch Selection
+  #
+  # Tests:
+  #   • `team` with 3-branch oneOf → shows `bg_name` enum locked to that team
+  #   • `environment_type` with single-branch oneOf → shows API-driven
+  #     `target_env` + hidden `cluster_name` + hidden `environment`
+  #   • Branch trio: freetext `branch` → ValidateAndFetch `github_branches`
+  #     → ContextViewer `github_branch` (required)
+  #   • Hidden fields alongside visible ones on the same step
+  #   • `service` (readonly pre-filled) + `microservice_name` (hidden pre-filled)
+  # ─────────────────────────────────────────────────────────────────────────────
+  parameters:
+    - title: "Step 1 — Team, Branch & Environment Selection"
+      required:
+        - team
+        - service
+        - microservice_name
+        - github_branch
+        - environment_type
+      properties:
+        token:
+          title: Harness Token
+          type: string
+          ui:widget: password
+          ui:field: HarnessAuthToken
+
+        team:
+          title: Team Name
+          type: string
+          description: Select Team Name
+          ui:field: HarnessProjectPicker
+          ui:options:
+            setContextData:
+              selected_team: team
+          ui:readonly: true
+
+        # Hidden pre-filled fields — should NOT produce validation errors
+        type:
+          type: string
+          title: Resource type
+          default: service
+          ui:widget: hidden
+
+        service:
+          title: Service Name
+          type: string
+          description: Service Name (pre-filled from catalog)
+          ui:readonly: true
+
+        microservice_name:
+          title: GitHub Repo Name
+          type: string
+          description: GitHub Repo Name
+          ui:widget: hidden
+
+        # Branch validation trio — tests ContextViewer required field
+        branch:
+          title: Branch Name
+          type: string
+          description: Enter the GitHub branch name to validate
+
+        github_branches:
+          type: string
+          ui:field: ValidateAndFetch
+          ui:options:
+            placeholder: Validates branch existence
+            path: "proxy/github-api/repos/ATT-DP10/{{ parameters.microservice_name }}/branches/{{ parameters.branch }}"
+            setContextData:
+              checkbranch: name
+
+        github_branch:
+          title: Branch Validation Result
+          type: string
+          ui:field: ContextViewer
+          readonly: true
+          ui:options:
+            getContextData: "${{formContext.checkbranch}}"
+          description: GitHub Branch must exist before proceeding
+          clearOnChange: true
+
+        environment_type:
+          title: Environment Type
+          type: string
+          description: Select the deployment environment tier
+          enum:
+            - dev
+            - test
+            - int
+            - perf
+            - stage
+            - prod
+
+      # ── DEPENDENCY 1: team → bg_name (3-branch oneOf)
+      # When user switches team, a different bg_name enum should appear.
+      # Tests: branch switching clears old bg_name error, shows correct branch.
+      dependencies:
+        team:
+          oneOf:
+            - properties:
+                team:
+                  enum:
+                    - DCP
+                bg_name:
+                  title: Business Group Name
+                  type: string
+                  description: Business Group (locked to DCP)
+                  enum:
+                    - DCP
+              required:
+                - bg_name
+            - properties:
+                team:
+                  enum:
+                    - DTVROMA
+                bg_name:
+                  title: Business Group Name
+                  type: string
+                  description: Business Group (locked to DTVROMA)
+                  enum:
+                    - DTVROMA
+              required:
+                - bg_name
+            - properties:
+                team:
+                  enum:
+                    - DTVMULE
+                bg_name:
+                  title: Business Group Name
+                  type: string
+                  description: Business Group (locked to DTVDispatch)
+                  enum:
+                    - DTVDispatch
+              required:
+                - bg_name
+            # Catch-all: other teams get no bg_name
+            - properties:
+                team:
+                  enum:
+                    - MSGBroker
+                    - USF
+                    - DPD
+                    - DIVA
+                    - EIA
+                    - DPP
+                    - EPOCH
+
+        # ── DEPENDENCY 2: environment_type → target_env (API) + hidden context fields
+        # Single-branch oneOf — ALL env types reveal the same additional fields.
+        # Tests: fields appearing/disappearing are correctly pruned from touchedFields.
+        environment_type:
+          oneOf:
+            - properties:
+                environment_type:
+                  enum:
+                    - dev
+                    - test
+                    - int
+                    - perf
+                    - stage
+                    - prod
+                target_env:
+                  title: Target Environment
+                  type: string
+                  ui:field: SelectFieldFromApi
+                  ui:options:
+                    placeholder: Select Target Environment
+                    path: "proxy/harness-idp2-api/v1/entities?kind=resource&type=eks&scopes=account.DCP.{{ parameters.team }}&tags={{ parameters.environment_type }}"
+                    valueSelector: name
+                    labelSelector: name
+                    setContextData:
+                      entity_identifier: identifier
+                      entity_aws_region: metadata.aws_region
+                      entity_environment_type: metadata.environment_type
+                      entity_environment: metadata.environment
+                    allowArbitraryValues: false
+                    clearOnChange: true
+                # Hidden fields populated from context — should NOT show required errors
+                cluster_name:
+                  type: string
+                  ui:field: ContextViewer
+                  ui:options:
+                    getContextData: "${{formContext.entity_identifier}}"
+                  ui:widget: hidden
+                  clearOnChange: true
+                environment:
+                  type: string
+                  ui:field: ContextViewer
+                  ui:options:
+                    getContextData: "${{formContext.entity_environment}}"
+                  ui:widget: hidden
+                  clearOnChange: true
+
+    # ─────────────────────────────────────────────────────────────────────────────
+    # STEP 2 — Production Deployment Config (4-level nested oneOf chains)
+    #
+    # Tests:
+    #   • `target_env_type` is a ContextViewer (value comes from context, not user
+    #     input) — when it resolves to "prod" it shows a deeper conditional tree
+    #   • Level 1: target_env_type → shows CR_type + deployment_strategy
+    #   • Level 2: CR_type oneOf (Standard / Normal+Emergency / Incident)
+    #              each branch has different CR_number pattern + deployment_strategy
+    #   • Level 3: deployment_strategy oneOf (canary / rolling-update)
+    #              each branch shows different phase enum
+    #   • Level 4 (python deploy variant): phase oneOf (DEPLOY / ROLLOUT_RESTART)
+    #              DEPLOY phase reveals source_env_prod + hidden source_env_type
+    #   • resolveActiveBranch must correctly walk 4 levels of nested schema paths
+    # ─────────────────────────────────────────────────────────────────────────────
+    - title: "Step 2 — Deployment Strategy & Change Request"
+      required:
+        - namespace
+      properties:
+        namespace:
+          title: Namespace
+          type: string
+          readonly: true
+          description: Select the Kubernetes namespace
+          ui:field: SelectFieldFromApi
+          ui:options:
+            placeholder: Select Namespace
+            path: "proxy/harness-idp2-api/v1/entities/account.DCP.{{ parameters.team }}/resource/{{ parameters.cluster_name }}?branch_name={{ parameters.environment }}"
+            arraySelector: metadata.cluster_namespace
+            valueSelector: namespace
+            allowArbitraryValues: false
+          clearOnchange: true
+
+        # ContextViewer field — value comes from formContext set in step 1.
+        # This field DRIVES the conditional below.
+        # Tests: ContextViewer-sourced value used as oneOf discriminator.
+        target_env_type:
+          title: Target Environment Type
+          type: string
+          readonly: true
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: "${{formContext.entity_environment_type}}"
+
+      dependencies:
+        target_env_type:
+          oneOf:
+            # ── Branch A: PROD — shows full CR + deployment_strategy + phase chain
+            - properties:
+                target_env_type:
+                  enum:
+                    - prod
+                deployment_strategy:
+                  title: Deployment Strategy
+                  type: string
+                  description: Select Deployment Strategy
+                  enum:
+                    - canary
+                    - rolling-update
+                CR_type:
+                  title: ServiceNow Change Request Type
+                  type: string
+                  description: >
+                    Use Normal/Emergency for service deployment, Standard for
+                    other tasks, or Incident for all actions.
+                  enum:
+                    - Normal
+                    - Standard
+                    - Emergency
+                    - Incident
+              required:
+                - deployment_strategy
+                - CR_type
+              # ── LEVEL 2: CR_type dependency inside prod branch
+              dependencies:
+                CR_type:
+                  oneOf:
+                    # Standard CR
+                    - properties:
+                        CR_type:
+                          enum:
+                            - Standard
+                        CR_number:
+                          title: ServiceNow Change Request Number
+                          type: string
+                          description: Enter ServiceNow CHG number
+                          pattern: "^(CHG)[0-9]*"
+                      required:
+                        - CR_number
+                      # ── LEVEL 3: deployment_strategy dependency inside Standard
+                      dependencies:
+                        deployment_strategy:
+                          oneOf:
+                            - properties:
+                                deployment_strategy:
+                                  enum:
+                                    - canary
+                                phase:
+                                  title: Phase
+                                  type: string
+                                  enum:
+                                    - PATCH_INGRESS
+                                    - SWITCH_LIVE
+                                    - ABORT_CANARY
+                                    - ROLLOUT_RESTART
+                              required:
+                                - phase
+                            - properties:
+                                deployment_strategy:
+                                  enum:
+                                    - rolling-update
+                                phase:
+                                  title: Phase
+                                  type: string
+                                  enum:
+                                    - ROLLOUT_RESTART
+                              required:
+                                - phase
+
+                    # Normal / Emergency CR
+                    - properties:
+                        CR_type:
+                          enum:
+                            - Normal
+                            - Emergency
+                        CR_number:
+                          title: ServiceNow Change Request Number
+                          type: string
+                          description: Enter ServiceNow CHG number
+                          pattern: "^(CHG)[0-9]*"
+                      required:
+                        - CR_number
+                      # ── LEVEL 3: deployment_strategy inside Normal/Emergency
+                      dependencies:
+                        deployment_strategy:
+                          oneOf:
+                            - properties:
+                                deployment_strategy:
+                                  enum:
+                                    - canary
+                                phase:
+                                  title: Phase
+                                  type: string
+                                  enum:
+                                    - DEPLOY
+                                    - PATCH_INGRESS
+                                    - SWITCH_LIVE
+                                    - ABORT_CANARY
+                                    - ROLLOUT_RESTART
+                              required:
+                                - phase
+                              # ── LEVEL 4: phase dependency inside canary/Normal
+                              dependencies:
+                                phase:
+                                  oneOf:
+                                    - properties:
+                                        phase:
+                                          enum:
+                                            - DEPLOY
+                                        source_env_prod:
+                                          title: Source Environment (Prod Promotion)
+                                          type: string
+                                          ui:field: SelectFieldFromApi
+                                          ui:options:
+                                            placeholder: Select Source Environment
+                                            path: "proxy/harness-idp2-api/v1/entities?kind=resource&type=eks&scopes=account.DCP.{{ parameters.team }}&tags=perf,stage"
+                                            valueSelector: name
+                                            setContextData:
+                                              source_environment_type: metadata.environment_type
+                                            allowArbitraryValues: false
+                                        source_env_type:
+                                          type: string
+                                          ui:field: ContextViewer
+                                          ui:options:
+                                            getContextData: "${{formContext.source_environment_type}}"
+                                          ui:widget: hidden
+                                          clearOnChange: true
+                                      required:
+                                        - source_env_prod
+                                    - properties:
+                                        phase:
+                                          enum:
+                                            - PATCH_INGRESS
+                                            - SWITCH_LIVE
+                                            - ABORT_CANARY
+                                            - ROLLOUT_RESTART
+                            - properties:
+                                deployment_strategy:
+                                  enum:
+                                    - rolling-update
+                                phase:
+                                  title: Phase
+                                  type: string
+                                  enum:
+                                    - DEPLOY
+                                    - ROLLOUT_RESTART
+                              required:
+                                - phase
+
+                    # Incident CR — different CR_number pattern (INC not CHG)
+                    - properties:
+                        CR_type:
+                          enum:
+                            - Incident
+                        CR_number:
+                          title: Incident Ticket Number
+                          type: string
+                          description: Enter Incident ticket INC number
+                          pattern: "^(INC)[0-9]*"
+                      required:
+                        - CR_number
+                      dependencies:
+                        deployment_strategy:
+                          oneOf:
+                            - properties:
+                                deployment_strategy:
+                                  enum:
+                                    - canary
+                                phase:
+                                  title: Phase
+                                  type: string
+                                  enum:
+                                    - DEPLOY
+                                    - PATCH_INGRESS
+                                    - SWITCH_LIVE
+                                    - ABORT_CANARY
+                                    - ROLLOUT_RESTART
+                              required:
+                                - phase
+                            - properties:
+                                deployment_strategy:
+                                  enum:
+                                    - rolling-update
+                                phase:
+                                  title: Phase
+                                  type: string
+                                  enum:
+                                    - DEPLOY
+                                    - ROLLOUT_RESTART
+                              required:
+                                - phase
+
+            # ── Branch B: NON-PROD — simpler, no CR required
+            - properties:
+                target_env_type:
+                  enum:
+                    - dev
+                    - test
+                    - int
+                deployment_strategy:
+                  title: Deployment Strategy
+                  type: string
+                  default: rolling-update
+                  enum:
+                    - rolling-update
+                phase:
+                  title: Phase
+                  type: string
+                  default: DEPLOY
+                  enum:
+                    - DEPLOY
+                source_env:
+                  title: Source Environment
+                  type: string
+                  ui:field: SelectFieldFromApi
+                  ui:options:
+                    placeholder: Select Source Environment
+                    path: "proxy/harness-idp2-api/v1/entities?kind=resource&type=eks&scopes=account.DCP.{{ parameters.team }}&limit=50&page=0"
+                    valueSelector: name
+                    allowArbitraryValues: false
+              required:
+                - deployment_strategy
+                - phase
+                - source_env
+
+            # ── Branch C: PERF/STAGE — canary only, no CR
+            - properties:
+                target_env_type:
+                  enum:
+                    - perf
+                    - stage
+                deployment_strategy:
+                  title: Deployment Strategy
+                  type: string
+                  enum:
+                    - canary
+              required:
+                - deployment_strategy
+              dependencies:
+                deployment_strategy:
+                  oneOf:
+                    - properties:
+                        deployment_strategy:
+                          enum:
+                            - canary
+                            - default: canary
+                        phase:
+                          title: Phase
+                          type: string
+                          enum:
+                            - DEPLOY
+                            - PATCH_INGRESS
+                            - SWITCH_LIVE
+                            - ABORT_CANARY
+                            - ROLLOUT_RESTART
+                      required:
+                        - phase
+
+    # ─────────────────────────────────────────────────────────────────────────────
+    # STEP 3 — Migration Config + Secret Action
+    #
+    # Tests:
+    #   • Two simultaneous dependencies on the same step (migration_type + action)
+    #   • `current_java_version` oneOf: switching clears old java_version error
+    #   • `migration_type` oneOf: branch switching clears target_boot/target_spring
+    #   • Boolean checkbox field (run_test_coverage)
+    #   • `action` oneOf: "delete" shows delete_key; "create/update" shows nothing
+    #   • Name field with pattern + minLength + maxLength (stacked validators)
+    #   • allOf inside nested object (EKS-style if/then/else for node counts)
+    # ─────────────────────────────────────────────────────────────────────────────
+    - title: "Step 3 — Migration, Secrets & Resource Config"
+      required:
+        - service_name
+        - migration_type
+        - current_java_version
+        - action
+      properties:
+        service_name:
+          title: Service Name
+          type: string
+          description: Unique name of the component
+          minLength: 3
+          maxLength: 50
+          pattern: "(?!.*-_)(?!.*_-)(?!.*--)(?!.*__)(?!.*-$)(?!.*_$)^[a-zA-Z]+[a-zA-Z0-9-_]*[a-zA-Z0-9-_]+$"
+          ui:autofocus: true
+          ui:help: >
+            Length 3-50. Allows a-z A-Z 0-9 _ -. No ITAP ID. No -- __ -_ _-.
+            Must not start or end with - or _.
+
+        description:
+          title: Description
+          type: string
+          description: Describe the component
+          minLength: 3
+
+        migration_type:
+          title: Migration Type
+          type: string
+          description: Java with Spring Boot, or Java with Spring Framework
+          enum:
+            - Java - Spring Boot
+            - Java - Spring Framework
+          default: Java - Spring Boot
+
+        current_java_version:
+          title: Current Java Version
+          type: string
+          description: Select current Java version
+          enum:
+            - "8"
+            - "11"
+            - "17"
+          default: "8"
+
+        action:
+          title: Secret Action
+          type: string
+          description: Choose what to do with the AWS secret
+          enum:
+            - create/update
+            - delete
+
+        # EKS-style nested object with allOf if/then/else
+        node_config:
+          title: Node Configuration
+          type: object
+          properties:
+            environment:
+              title: Environment Tier
+              type: string
+              enum:
+                - non-prod
+                - prod
+          required:
+            - environment
+          allOf:
+            - if:
+                properties:
+                  environment:
+                    const: non-prod
+              then:
+                properties:
+                  node_instance_type:
+                    title: Node Instance Type
+                    type: string
+                    enum:
+                      - t3a.xlarge
+                      - t3a.2xlarge
+                      - m6a.xlarge
+                      - m6a.2xlarge
+                      - c6a.xlarge
+                      - c6a.2xlarge
+                  min_nodes:
+                    title: Minimum Nodes
+                    type: integer
+                    minimum: 2
+                    maximum: 4
+                    ui:help: Must be between 2 and 4 for non-prod
+                  max_nodes:
+                    title: Maximum Nodes
+                    type: integer
+                    minimum: 2
+                    maximum: 10
+                    ui:help: Must be between 2 and 10 for non-prod
+                required:
+                  - node_instance_type
+                  - min_nodes
+                  - max_nodes
+            - if:
+                properties:
+                  environment:
+                    const: prod
+              then:
+                properties:
+                  node_instance_type:
+                    title: Node Instance Type
+                    type: string
+                    enum:
+                      - m6a.2xlarge
+                      - m6a.xlarge
+                      - c6a.2xlarge
+                      - r5a.xlarge
+                      - r5a.2xlarge
+                  min_nodes:
+                    title: Minimum Nodes
+                    type: integer
+                    minimum: 4
+                    maximum: 8
+                    ui:help: Must be between 4 and 8 for prod
+                  max_nodes:
+                    title: Maximum Nodes
+                    type: integer
+                    minimum: 4
+                    maximum: 20
+                    ui:help: Must be between 4 and 20 for prod
+                required:
+                  - node_instance_type
+                  - min_nodes
+                  - max_nodes
+
+      dependencies:
+        # ── DEPENDENCY A: current_java_version → java_version (target)
+        # Switching 8→11 or 11→17 switches the allowed target enum.
+        # Tests: error on java_version cleared when current_java_version changes.
+        current_java_version:
+          oneOf:
+            - properties:
+                current_java_version:
+                  enum:
+                    - "8"
+                    - "11"
+                java_version:
+                  title: Target Java Version
+                  type: string
+                  enum:
+                    - "17"
+                  default: "17"
+            - properties:
+                current_java_version:
+                  enum:
+                    - "17"
+                java_version:
+                  title: Target Java Version
+                  type: string
+                  enum:
+                    - "21"
+                  default: "21"
+
+        # ── DEPENDENCY B: migration_type → target framework version + checkbox
+        # Switching Spring Boot ↔ Spring Framework clears the wrong target error.
+        # Tests: boolean checkbox field with live validation.
+        migration_type:
+          oneOf:
+            - properties:
+                migration_type:
+                  enum:
+                    - Java - Spring Boot
+                target_boot:
+                  title: Target Spring Boot Version
+                  type: string
+                  enum:
+                    - 3.5.0
+                    - 3.4.5
+                  default: "3.5.0"
+                run_test_coverage:
+                  title: Run test coverage Before & After migration
+                  type: boolean
+                  default: false
+                  ui:widget: checkbox
+              required:
+                - target_boot
+            - properties:
+                migration_type:
+                  enum:
+                    - Java - Spring Framework
+                target_spring:
+                  title: Target Spring Framework Version
+                  type: string
+                  enum:
+                    - 6.2.0
+                    - 5.3.39
+                  default: "6.2.0"
+                run_test_coverage:
+                  title: Run test coverage Before & After migration
+                  type: boolean
+                  default: false
+                  ui:widget: checkbox
+              required:
+                - target_spring
+
+        # ── DEPENDENCY C: action → delete_key (required only on delete)
+        # Tests: switching action from "delete" to "create/update" should
+        # immediately clear the delete_key required error.
+        action:
+          oneOf:
+            - properties:
+                action:
+                  enum:
+                    - delete
+                delete_key:
+                  title: Keys to Delete
+                  type: string
+                  description: >
+                    Enter one or more keys to remove. Use commas to separate
+                    multiple keys. e.g. DB_PASSWORD,API_SECRET
+              required:
+                - delete_key
+            - properties:
+                action:
+                  enum:
+                    - create/update
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  steps:
+    - id: trigger
+      name: Execute pipeline
+      action: trigger:harness-custom-pipeline
+      input:
+        url: https://app.harness.io/ng/account/test/all/orgs/DCP/projects/DCP/pipelines/live_validation_test/pipeline-studio/
+        inputset:
+          team: ${{ parameters.team }}
+          bg_name: ${{ parameters.bg_name }}
+          environment_type: ${{ parameters.environment_type }}
+          target_env: ${{ parameters.target_env }}
+          github_branch: ${{ parameters.github_branch }}
+          service_name: ${{ parameters.service }}
+          namespace: ${{ parameters.namespace }}
+          CR_type: ${{ parameters.CR_type }}
+          CR_number: ${{ parameters.CR_number }}
+          deployment_strategy: ${{ parameters.deployment_strategy }}
+          phase: ${{ parameters.phase }}
+          source_env_prod: ${{ parameters.source_env_prod }}
+          migration_type: ${{ parameters.migration_type }}
+          current_java_version: ${{ parameters.current_java_version }}
+          java_version: ${{ parameters.java_version }}
+          target_boot: ${{ parameters.target_boot }}
+          target_spring: ${{ parameters.target_spring }}
+          run_test_coverage: ${{ parameters.run_test_coverage }}
+          action: ${{ parameters.action }}
+          delete_key: ${{ parameters.delete_key }}
+          service_name_new: ${{ parameters.service_name }}
+        apikey: ${{ parameters.token }}
+        showOutputVariables: true
+
+  output:
+    links:
+      - title: Pipeline Details
+        url: ${{ steps.trigger.output.PipelineUrl }}
+    text:
+      - title: Result
+        content: ${{ steps.trigger.output.build_result }}

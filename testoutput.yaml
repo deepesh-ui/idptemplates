@@ -1,0 +1,54 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+# some metadata about the template itself
+metadata:
+  name: add-user-to-group-via-api
+  title: add-user-to-group-via-api
+  description: add-user-to-group-via-api
+  tags:
+    - harness
+    - "30"
+spec:
+  owner: group:default/HSF_Admins
+  type: harness_project
+  parameters:
+    - title: User Onboarding Details
+      properties:
+        token:
+          title: Harness Token
+          type: string
+          ui:widget: password
+          ui:field: HarnessAuthToken
+        tokensecret:
+          title: Username
+          type: string
+          description: Select an existing user to grant access
+  steps:  
+    - id: provision_workspace
+      name: Onboarding user
+      action: trigger:harness-custom-pipeline
+      input:
+        url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/module/idp-admin/orgs/default/projects/Deepesh_CDE/pipelines/testoutputwithremote/pipeline-studio/?branch=main&repoName=deepesh-templates&connectorRef=&storeType=REMOTE
+        inputset:
+          version: 5
+          tokensecret: ${{ parameters.tokensecret }}
+        apiKeySecret: Deepesh_X_API_Key
+        showOutputVariables: true
+    - id: retryworkflowfromstage
+      name: retry pipeline from stage
+      action: trigger:harness-custom-pipeline
+      input:
+        url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/all/orgs/default/projects/Deepesh_CDE/pipelines/Build_deepesh_templates_1754479061798/pipeline-studio/?storeType=REMOTE&connectorRef=&repoName=deepesh-templates&branch=main
+        inputset:
+          version: 5
+          tokensecret: ${{ parameters.tokensecret }}
+        apiKeySecret: Deepesh_X_API_Key
+        showOutputVariables: true        
+  output:
+    text:
+      - title: Outputs
+        apiKeySecret: harness_apikey
+        content: |
+          url: ${{ steps.provision_workspace.output.PipelineUrl }}
+          Output Variable some_stat is: `${{ steps.provision_workspace.output['pipeline.stages.deploy.spec.execution.steps.ShellScript_1.output.outputVariables.some_stat'] }}`
+          Output Variable pipelinevaroutput is: `${{ steps.provision_workspace.output['pipeline.stages.deploy.spec.execution.steps.ShellScript_1.output.outputVariables.pipelinevaroutput'] }}`

@@ -10,6 +10,11 @@ spec:
 
   parameters:
     - title: Text Input Examples
+      required:
+        - projectName
+        - userEmail
+        - slugField
+        - notesField
       properties:
         projectName:
           type: string
@@ -61,6 +66,12 @@ spec:
             multiline: true
 
     - title: Dropdown Examples
+      required:
+        - environment
+        - githubRepo
+        - productCategory
+        - dummyUser
+        - multiRegion
       properties:
         environment:
           type: string
@@ -160,6 +171,11 @@ spec:
                 value: ap-south-1
 
     - title: Button & JSON Examples
+      required:
+        - validateSetup
+        - triggerAction
+        - serviceConfig
+        - yamlSnippet
       properties:
         validateSetup:
           type: string

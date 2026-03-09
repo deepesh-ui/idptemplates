@@ -1,0 +1,828 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: live-validation-regression-test
+  title: LiveValidationRegressionTest
+  description: >-
+    Targets every regression risk identified from CDK (115), DirecTV (67), and
+    United (100) client workflows. Covers deeply nested oneOf-in-dependencies
+    (7 levels), if/then/else with contains, $ref resolution, hidden fields,
+    array minItems, and mixed conditional patterns.
+spec:
+  owner: group:default/idp-qa
+  type: service
+
+  parameters:
+    # ─────────────────────────────────────────────────────────
+    # STEP 1 — Deep Nested oneOf-in-dependencies (CDK pattern)
+    # Tests resolveActiveBranch at 5+ levels of nesting
+    # ─────────────────────────────────────────────────────────
+    - title: "Step 1: Deep Nested oneOf (CDK Pattern)"
+      description: >-
+        Mirrors CDK's 7-level dependencies→oneOf→dependencies→oneOf chain.
+        Verify: (1) correct branch fields appear at each level, (2) switching
+        a parent resets child branches, (3) no stale errors from sibling branches.
+      type: object
+      required:
+        - action
+      properties:
+        action:
+          title: Action
+          type: string
+          description: Top-level selector — each option reveals a different nested chain.
+          enum:
+            - create
+            - update
+            - delete
+          enumNames:
+            - Create New Resource
+            - Update Existing Resource
+            - Delete Resource
+      dependencies:
+        action:
+          oneOf:
+            # ── Branch: create ──
+            - properties:
+                action:
+                  enum:
+                    - create
+                resourceName:
+                  title: Resource Name
+                  type: string
+                  description: Name for the new resource (3–40 lowercase chars).
+                  minLength: 3
+                  maxLength: 40
+                  pattern: "^[a-z][a-z0-9-]*$"
+                showAdvanced:
+                  title: Show Advanced Options
+                  type: boolean
+                  default: false
+                  ui:widget: checkbox
+              required:
+                - resourceName
+              # Level 2 — nested dependency inside create branch
+              dependencies:
+                showAdvanced:
+                  oneOf:
+                    - properties:
+                        showAdvanced:
+                          const: false
+                    - properties:
+                        showAdvanced:
+                          const: true
+                        techStack:
+                          title: Technology Stack
+                          type: string
+                          enum:
+                            - java
+                            - python
+                            - node
+                          enumNames:
+                            - Java (Spring Boot)
+                            - Python (FastAPI)
+                            - Node.js (Express)
+                      required:
+                        - techStack
+                      # Level 3 — nested inside showAdvanced=true
+                      dependencies:
+                        techStack:
+                          oneOf:
+                            - properties:
+                                techStack:
+                                  const: java
+                                javaVersion:
+                                  title: Java Version
+                                  type: string
+                                  enum:
+                                    - "11"
+                                    - "17"
+                                    - "21"
+                                  default: "17"
+                                enableDeployment:
+                                  title: Enable Deployment
+                                  type: boolean
+                                  default: false
+                                  ui:widget: checkbox
+                              required:
+                                - javaVersion
+                              # Level 4 — nested inside java
+                              dependencies:
+                                enableDeployment:
+                                  oneOf:
+                                    - properties:
+                                        enableDeployment:
+                                          const: false
+                                    - properties:
+                                        enableDeployment:
+                                          const: true
+                                        deploymentType:
+                                          title: Deployment Type
+                                          type: string
+                                          enum:
+                                            - k8s
+                                            - ecs
+                                            - lambda
+                                          enumNames:
+                                            - Kubernetes
+                                            - ECS
+                                            - Lambda
+                                      required:
+                                        - deploymentType
+                                      # Level 5 — nested inside enableDeployment=true
+                                      dependencies:
+                                        deploymentType:
+                                          oneOf:
+                                            - properties:
+                                                deploymentType:
+                                                  const: k8s
+                                                k8sNamespace:
+                                                  title: K8s Namespace
+                                                  type: string
+                                                  minLength: 1
+                                                  description: Target namespace for deployment.
+                                                replicaCount:
+                                                  title: Replica Count
+                                                  type: integer
+                                                  minimum: 1
+                                                  maximum: 20
+                                                  default: 2
+                                              required:
+                                                - k8sNamespace
+                                            - properties:
+                                                deploymentType:
+                                                  const: ecs
+                                                ecsCluster:
+                                                  title: ECS Cluster Name
+                                                  type: string
+                                                  minLength: 3
+                                                  description: Target ECS cluster.
+                                                taskCpu:
+                                                  title: Task CPU (vCPU)
+                                                  type: string
+                                                  enum:
+                                                    - "256"
+                                                    - "512"
+                                                    - "1024"
+                                                  default: "512"
+                                              required:
+                                                - ecsCluster
+                                            - properties:
+                                                deploymentType:
+                                                  const: lambda
+                                                lambdaRuntime:
+                                                  title: Lambda Runtime
+                                                  type: string
+                                                  enum:
+                                                    - java17
+                                                    - java21
+                                                  default: java17
+                                                lambdaMemory:
+                                                  title: Memory (MB)
+                                                  type: integer
+                                                  minimum: 128
+                                                  maximum: 10240
+                                                  default: 512
+                                              required:
+                                                - lambdaRuntime
+                            - properties:
+                                techStack:
+                                  const: python
+                                pythonVersion:
+                                  title: Python Version
+                                  type: string
+                                  enum:
+                                    - "3.10"
+                                    - "3.11"
+                                    - "3.12"
+                                  default: "3.11"
+                              required:
+                                - pythonVersion
+                            - properties:
+                                techStack:
+                                  const: node
+                                nodeVersion:
+                                  title: Node.js Version
+                                  type: string
+                                  enum:
+                                    - "18"
+                                    - "20"
+                                    - "22"
+                                  default: "20"
+                              required:
+                                - nodeVersion
+
+            # ── Branch: update ──
+            - properties:
+                action:
+                  enum:
+                    - update
+                existingResourceId:
+                  title: Existing Resource ID
+                  type: string
+                  description: ID of the resource to update.
+                  minLength: 5
+                updateScope:
+                  title: Update Scope
+                  type: string
+                  enum:
+                    - config
+                    - code
+                    - infra
+                  enumNames:
+                    - Configuration Only
+                    - Code + Config
+                    - Infrastructure
+              required:
+                - existingResourceId
+                - updateScope
+
+            # ── Branch: delete ──
+            - properties:
+                action:
+                  enum:
+                    - delete
+                deleteResourceId:
+                  title: Resource ID to Delete
+                  type: string
+                  description: Must match exactly — no undo.
+                  minLength: 5
+                confirmDeletion:
+                  title: Type DELETE to confirm
+                  type: string
+                  pattern: "^DELETE$"
+                  description: Type the word DELETE (case-sensitive) to confirm.
+              required:
+                - deleteResourceId
+                - confirmDeletion
+
+    # ─────────────────────────────────────────────────────────
+    # STEP 2 — if/then/else with contains (United pattern)
+    # Tests retrieveSchema + visibleFieldPaths for array-contains conditionals
+    # ─────────────────────────────────────────────────────────
+    - title: "Step 2: if/then/else + contains (United Pattern)"
+      description: >-
+        Mirrors United's allOf→if→contains→then pattern for checkbox-driven
+        conditional fields. Verify: (1) checking a box reveals its fields,
+        (2) unchecking hides them and clears errors, (3) multiple simultaneous
+        conditions work independently.
+      type: object
+      required:
+        - selectedEnvironments
+      properties:
+        selectedEnvironments:
+          type: array
+          title: Target Environments
+          description: Select one or more environments — each reveals its own config fields.
+          items:
+            type: string
+            enum:
+              - dev
+              - qa
+              - staging
+              - prod
+          uniqueItems: true
+          minItems: 1
+          ui:widget: checkboxes
+      allOf:
+        # ── dev selected → show dev fields ──
+        - if:
+            properties:
+              selectedEnvironments:
+                contains:
+                  const: dev
+          then:
+            properties:
+              devCluster:
+                title: Dev Cluster
+                type: string
+                description: Kubernetes cluster for dev.
+                minLength: 2
+              devReplicas:
+                title: Dev Replicas
+                type: integer
+                minimum: 1
+                maximum: 5
+                default: 1
+            required:
+              - devCluster
+
+        # ── qa selected → show qa fields ──
+        - if:
+            properties:
+              selectedEnvironments:
+                contains:
+                  const: qa
+          then:
+            properties:
+              qaCluster:
+                title: QA Cluster
+                type: string
+                description: Kubernetes cluster for QA.
+                minLength: 2
+              qaTestSuite:
+                title: QA Test Suite
+                type: string
+                enum:
+                  - smoke
+                  - regression
+                  - full
+                default: smoke
+            required:
+              - qaCluster
+
+        # ── staging selected → show staging fields ──
+        - if:
+            properties:
+              selectedEnvironments:
+                contains:
+                  const: staging
+          then:
+            properties:
+              stagingCluster:
+                title: Staging Cluster
+                type: string
+                minLength: 2
+              stagingApprovalRequired:
+                title: Requires Approval
+                type: boolean
+                default: true
+                ui:widget: checkbox
+            required:
+              - stagingCluster
+
+        # ── prod selected → show prod fields with extra validation ──
+        - if:
+            properties:
+              selectedEnvironments:
+                contains:
+                  const: prod
+          then:
+            properties:
+              prodCluster:
+                title: Production Cluster
+                type: string
+                description: Production cluster — requires approval.
+                minLength: 3
+              prodChangeTicket:
+                title: Change Ticket Number
+                type: string
+                description: "Format: CHG-XXXXXXX"
+                pattern: "^CHG-[0-9]{7}$"
+              prodApprover:
+                title: Approver Email
+                type: string
+                format: email
+            required:
+              - prodCluster
+              - prodChangeTicket
+              - prodApprover
+
+    # ─────────────────────────────────────────────────────────
+    # STEP 3 — Array Validation + Hidden Fields + Mixed Patterns
+    # Tests array back/next persistence, minItems, hidden fields,
+    # and oneOf with contains+anyOf inside if (United edge case)
+    # ─────────────────────────────────────────────────────────
+    - title: "Step 3: Arrays, Hidden Fields & Edge Cases"
+      description: >-
+        Tests: (1) array minItems/uniqueItems validation persists after back/next,
+        (2) hidden fields don't leak errors, (3) nested oneOf inside if/then,
+        (4) pattern validation on array items. Navigate away and back to verify
+        array validation is preserved.
+      type: object
+      required:
+        - ownerIds
+        - notificationChannels
+        - deployRegion
+      properties:
+        # Hidden fields — should NOT produce visible errors
+        accountId:
+          title: Account ID
+          type: string
+          ui:widget: hidden
+          default: auto-populated-account-id
+        authToken:
+          title: Auth Token
+          type: string
+          ui:widget: hidden
+          ui:field: HarnessAuthToken
+
+        # Array with item-level pattern + minItems
+        ownerIds:
+          title: Owner IDs
+          type: array
+          description: "Enter user IDs (format: u or v followed by 6 digits). Minimum 1 required."
+          items:
+            type: string
+            pattern: "^[uv][0-9]{6}$"
+            minLength: 7
+            maxLength: 7
+          minItems: 1
+          maxItems: 5
+          uniqueItems: true
+          ui:options:
+            addable: true
+            removable: true
+            orderable: true
+
+        # Checkboxes array driving conditional fields
+        notificationChannels:
+          type: array
+          title: Notification Channels
+          description: Select channels — each reveals its config.
+          items:
+            type: string
+            enum:
+              - slack
+              - email
+              - pagerduty
+          uniqueItems: true
+          minItems: 1
+          ui:widget: checkboxes
+
+        deployRegion:
+          title: Deploy Region
+          type: string
+          enum:
+            - us-east-1
+            - us-west-2
+            - eu-west-1
+            - ap-southeast-1
+          ui:widget: select
+
+        # Infrastructure with contains + anyOf inside if
+        infrastructure:
+          type: array
+          title: Infrastructure Platform
+          description: Select platform(s) — components appear based on selection.
+          items:
+            type: string
+            enum:
+              - ECS
+              - EKS
+              - Lambda
+          uniqueItems: true
+          ui:widget: checkboxes
+
+      allOf:
+        # Notification channel conditionals
+        - if:
+            properties:
+              notificationChannels:
+                contains:
+                  const: slack
+          then:
+            properties:
+              slackWebhook:
+                title: Slack Webhook URL
+                type: string
+                description: "Must start with https://hooks.slack.com/"
+                pattern: "^https://hooks\\.slack\\.com/.*$"
+            required:
+              - slackWebhook
+
+        - if:
+            properties:
+              notificationChannels:
+                contains:
+                  const: email
+          then:
+            properties:
+              emailRecipients:
+                title: Email Recipients
+                type: string
+                description: Comma-separated list of email addresses.
+                minLength: 5
+            required:
+              - emailRecipients
+
+        - if:
+            properties:
+              notificationChannels:
+                contains:
+                  const: pagerduty
+          then:
+            properties:
+              pagerdutyKey:
+                title: PagerDuty Integration Key
+                type: string
+                minLength: 32
+                maxLength: 32
+                description: Exactly 32-character integration key.
+            required:
+              - pagerdutyKey
+
+        # Infrastructure — contains + anyOf inside if (United edge case)
+        - if:
+            properties:
+              infrastructure:
+                contains:
+                  anyOf:
+                    - const: ECS
+                    - const: EKS
+          then:
+            properties:
+              containerImage:
+                title: Container Image
+                type: string
+                description: "Full image URI (e.g. 123456789.dkr.ecr.us-east-1.amazonaws.com/app:latest)"
+                minLength: 10
+              containerPort:
+                title: Container Port
+                type: integer
+                minimum: 1
+                maximum: 65535
+                default: 8080
+            required:
+              - containerImage
+
+        - if:
+            properties:
+              infrastructure:
+                contains:
+                  const: Lambda
+          then:
+            properties:
+              lambdaHandler:
+                title: Lambda Handler
+                type: string
+                description: "Format: package.Class::method"
+                minLength: 5
+              lambdaTimeout:
+                title: Timeout (seconds)
+                type: integer
+                minimum: 1
+                maximum: 900
+                default: 30
+            required:
+              - lambdaHandler
+
+    # ─────────────────────────────────────────────────────────
+    # STEP 4 — dependencies + oneOf with boolean toggles (CDK/DirecTV pattern)
+    # Tests the hasPermissions hidden→oneOf, codebase→tech_stack chain,
+    # and environment_type→deployment_strategy→phase chain
+    # ─────────────────────────────────────────────────────────
+    - title: "Step 4: Boolean Toggle Chains & Permission Gates"
+      description: >-
+        Mirrors CDK's hasPermissions gate and DirecTV's environment→strategy→phase
+        chain. Verify: (1) permission false blocks with message, (2) true reveals
+        form, (3) environment selection drives strategy options, (4) strategy drives
+        phase options.
+      type: object
+      required:
+        - codebase
+      properties:
+        # Permission gate (CDK pattern: hidden field + oneOf)
+        hasPermissions:
+          title: Has Permissions
+          type: string
+          default: "true"
+          ui:widget: hidden
+        codebase:
+          title: Codebase Platform
+          type: string
+          enum:
+            - github
+            - gitlab
+            - bitbucket
+          enumNames:
+            - GitHub
+            - GitLab
+            - Bitbucket
+      dependencies:
+        hasPermissions:
+          oneOf:
+            - properties:
+                hasPermissions:
+                  const: "false"
+                unauthorizedMessage:
+                  title: Access Denied
+                  type: string
+                  description: You do not have permission to execute this workflow.
+                  ui:disabled: true
+                  default: "Contact your administrator for access."
+            - properties:
+                hasPermissions:
+                  const: "true"
+                environmentType:
+                  title: Environment Type
+                  type: string
+                  enum:
+                    - dev
+                    - test
+                    - staging
+                    - prod
+                  enumNames:
+                    - Development
+                    - Test
+                    - Staging
+                    - Production
+              required:
+                - environmentType
+              # Level 2: environment → deployment strategy
+              dependencies:
+                environmentType:
+                  oneOf:
+                    - properties:
+                        environmentType:
+                          enum:
+                            - dev
+                            - test
+                        deploymentStrategy:
+                          title: Deployment Strategy
+                          type: string
+                          enum:
+                            - rolling
+                            - recreate
+                          enumNames:
+                            - Rolling Update
+                            - Recreate
+                          default: rolling
+                    - properties:
+                        environmentType:
+                          enum:
+                            - staging
+                            - prod
+                        deploymentStrategy:
+                          title: Deployment Strategy
+                          type: string
+                          enum:
+                            - canary
+                            - bluegreen
+                            - rolling
+                          enumNames:
+                            - Canary
+                            - Blue/Green
+                            - Rolling Update
+                        crType:
+                          title: Change Request Type
+                          type: string
+                          enum:
+                            - Standard
+                            - Emergency
+                            - Incident
+                      required:
+                        - deploymentStrategy
+                        - crType
+                      # Level 3: crType → CR number
+                      dependencies:
+                        crType:
+                          oneOf:
+                            - properties:
+                                crType:
+                                  enum:
+                                    - Standard
+                                crNumber:
+                                  title: CR Number
+                                  type: string
+                                  description: "Format: CHG-XXXXXXX"
+                                  pattern: "^CHG-[0-9]{7}$"
+                              required:
+                                - crNumber
+                            - properties:
+                                crType:
+                                  enum:
+                                    - Emergency
+                                crNumber:
+                                  title: Emergency CR Number
+                                  type: string
+                                  description: "Format: EMRG-XXXXX"
+                                  pattern: "^EMRG-[0-9]{5}$"
+                                emergencyApprover:
+                                  title: Emergency Approver
+                                  type: string
+                                  format: email
+                              required:
+                                - crNumber
+                                - emergencyApprover
+                            - properties:
+                                crType:
+                                  enum:
+                                    - Incident
+                                incidentId:
+                                  title: Incident ID
+                                  type: string
+                                  description: "Format: INC-XXXXXXXX"
+                                  pattern: "^INC-[0-9]{8}$"
+                              required:
+                                - incidentId
+                        # Level 3 parallel: deploymentStrategy → phase
+                        deploymentStrategy:
+                          oneOf:
+                            - properties:
+                                deploymentStrategy:
+                                  const: canary
+                                canaryPhase:
+                                  title: Canary Phase
+                                  type: string
+                                  enum:
+                                    - PATCH_INGRESS
+                                    - DEPLOY
+                                    - PROMOTE
+                                  description: Select the canary deployment phase.
+                              required:
+                                - canaryPhase
+                              # Level 4: canary phase details
+                              dependencies:
+                                canaryPhase:
+                                  oneOf:
+                                    - properties:
+                                        canaryPhase:
+                                          const: PATCH_INGRESS
+                                        canaryWeight:
+                                          title: Canary Weight (%)
+                                          type: integer
+                                          minimum: 1
+                                          maximum: 100
+                                          default: 10
+                                          description: Percentage of traffic to route to canary.
+                                      required:
+                                        - canaryWeight
+                                    - properties:
+                                        canaryPhase:
+                                          const: DEPLOY
+                                        sourceEnv:
+                                          title: Source Environment
+                                          type: string
+                                          description: Environment to promote from.
+                                          minLength: 2
+                                      required:
+                                        - sourceEnv
+                                    - properties:
+                                        canaryPhase:
+                                          const: PROMOTE
+                                        promoteConfirm:
+                                          title: "Type PROMOTE to confirm"
+                                          type: string
+                                          pattern: "^PROMOTE$"
+                                          description: Type PROMOTE to confirm full traffic switch.
+                                      required:
+                                        - promoteConfirm
+                            - properties:
+                                deploymentStrategy:
+                                  const: bluegreen
+                                bgSlot:
+                                  title: Target Slot
+                                  type: string
+                                  enum:
+                                    - blue
+                                    - green
+                                  description: Which slot to deploy to.
+                              required:
+                                - bgSlot
+                            - properties:
+                                deploymentStrategy:
+                                  const: rolling
+                                rollingMaxSurge:
+                                  title: Max Surge (%)
+                                  type: integer
+                                  minimum: 0
+                                  maximum: 100
+                                  default: 25
+
+        codebase:
+          oneOf:
+            - properties:
+                codebase:
+                  const: github
+                githubOrg:
+                  title: GitHub Organization
+                  type: string
+                  minLength: 1
+                githubRepo:
+                  title: GitHub Repository
+                  type: string
+                  minLength: 1
+              required:
+                - githubOrg
+                - githubRepo
+            - properties:
+                codebase:
+                  const: gitlab
+                gitlabProject:
+                  title: GitLab Project Path
+                  type: string
+                  description: "Format: group/project"
+                  minLength: 3
+              required:
+                - gitlabProject
+            - properties:
+                codebase:
+                  const: bitbucket
+                bitbucketWorkspace:
+                  title: Bitbucket Workspace
+                  type: string
+                  minLength: 1
+                bitbucketRepo:
+                  title: Bitbucket Repository
+                  type: string
+                  minLength: 1
+              required:
+                - bitbucketWorkspace
+                - bitbucketRepo
+
+  steps:
+    - id: log
+      name: Log Parameters
+      action: debug:log
+      input:
+        message: "Regression test completed with parameters: ${{ parameters | dump }}"

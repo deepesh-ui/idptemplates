@@ -24,6 +24,7 @@ spec:
       input:
         url: https://qa.harness.io/ng/account/px7xd_BFRCi-pfWPYXVjvw/all/orgs/default/projects/Deepesh_CDE/pipelines/Approval_pipeline/pipeline-studio/?storeType=INLINE
         inputset: 
+          "parameters": ${{parameters}}
           "message": ${{ parameters.message }}
         apikey: ${{ parameters.token }}      
   output:

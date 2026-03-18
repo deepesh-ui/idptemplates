@@ -1,0 +1,460 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: custom-field-showcase
+  title: CustomField — All Use Cases
+  description: Demonstrates every capability of the CustomField scaffolder extension
+spec:
+  owner: team-idp
+  type: service
+
+  parameters:
+    # ─────────────────────────────────────────────
+    # STEP 1 — TEXT FIELD use cases
+    # ─────────────────────────────────────────────
+    - title: Text Fields
+      properties:
+
+        # 1a. Plain single-line text
+        serviceName:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: text
+            title: Service Name
+            placeholder: my-service
+            description: A plain single-line text input
+
+        # 1b. Multiline text (textarea)
+        serviceDescription:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: text
+            multiline: true
+            title: Service Description
+            placeholder: Describe your service...
+            description: Renders as a textarea
+
+        # 1c. Regex-validated text
+        repoSlug:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: text
+            title: Repo Slug
+            placeholder: my-repo-name
+            regex:
+              pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+              message: Only lowercase letters, numbers, and hyphens allowed
+            description: Validated locally against a regex pattern
+
+        # 1d. Built-in named validator
+        emailAddress:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: text
+            title: Email Address
+            placeholder: user@example.com
+            validator: email
+            description: Uses a built-in validator function by name
+
+        # 1e. API validation triggered on every keystroke (onChange)
+        productTitle:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: text
+            title: Product Title (API validate on change)
+            placeholder: Enter a product title
+            debounceMs: 600
+            apiValidationTrigger: onChange
+            apiValidation:
+              path: /proxy/dummyjson/products/search
+              method: GET
+              params:
+                q: '{{ value }}'
+              responseValidPath: total
+              errorMessagePath: message
+            messages:
+              validating: Checking availability...
+              success: Title is available
+              apiError: Could not reach validation service
+
+        # 1f. API validation triggered by a button (onButton)
+        userId:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: text
+            title: User ID (validate on button click)
+            placeholder: Enter a numeric user ID (1–100)
+            apiValidationTrigger: onButton
+            validateButtonText: Check User
+            apiValidation:
+              path: /proxy/dummyjson/users/{{ value }}
+              method: GET
+              responseValidPath: id
+              errorMessagePath: message
+            messages:
+              success: User exists
+              apiError: User not found
+            description: API call fires only when the button is clicked
+
+        # 1g. Text with custom messages overrides
+        customMsgField:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: text
+            title: Custom Messages Demo
+            placeholder: Type something
+            regex:
+              pattern: '^[A-Z].*'
+              message: Must start with an uppercase letter
+            messages:
+              required: This field cannot be left empty
+              validationError: Please start with a capital letter
+              success: Looks good!
+
+    # ─────────────────────────────────────────────
+    # STEP 2 — DROPDOWN FIELD use cases
+    # ─────────────────────────────────────────────
+    - title: Dropdown Fields
+      properties:
+
+        # 2a. Static options list
+        environment:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: dropdown
+            title: Environment
+            placeholder: Select an environment
+            options:
+              - label: Development
+                value: dev
+              - label: Staging
+                value: staging
+              - label: Production
+                value: prod
+
+        # 2b. API-fetched options (GET, arraySelector, valueSelector, labelSelector)
+        productCategory:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: dropdown
+            title: Product Category
+            placeholder: Select a category
+            apiOptions:
+              path: /proxy/dummyjson/products/categories
+              method: GET
+              # response is a flat array of strings like ["smartphones","laptops",...]
+              # no arraySelector needed — the root is the array
+              valueSelector: slug
+              labelSelector: name
+
+        # 2c. API-fetched with searchQueryParam (server-side search)
+        productSearch:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: dropdown
+            title: Product (searchable)
+            placeholder: Type to search products...
+            apiOptions:
+              path: /proxy/dummyjson/products/search
+              method: GET
+              arraySelector: products
+              valueSelector: id
+              labelSelector: title
+              searchQueryParam: q
+
+        # 2d. Multi-select
+        tags:
+          type: array
+          items:
+            type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: dropdown
+            multiSelect: true
+            title: Tags (multi-select)
+            placeholder: Select one or more tags
+            options:
+              - label: Backend
+                value: backend
+              - label: Frontend
+                value: frontend
+              - label: Data
+                value: data
+              - label: Platform
+                value: platform
+
+        # 2e. Allow custom value (creatable)
+        customTag:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: dropdown
+            title: Custom Tag (creatable)
+            allowCustomValue: true
+            placeholder: Select or type a new tag
+            options:
+              - label: Backend
+                value: backend
+              - label: Frontend
+                value: frontend
+
+        # 2f. Dropdown that depends on another field (dependsOn)
+        # productCategory must be filled before this fetches
+        productByCategory:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: dropdown
+            title: Product (depends on category)
+            placeholder: First select a category above
+            dependsOn:
+              - productCategory
+            apiOptions:
+              path: /proxy/dummyjson/products/category/{{ parameters.productCategory }}
+              method: GET
+              arraySelector: products
+              valueSelector: id
+              labelSelector: title
+            messages:
+              dependencyNotMet: Please select a category first
+
+        # 2g. Dropdown that sets context data from selected option metadata
+        userPicker:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: dropdown
+            title: User (sets email into context)
+            placeholder: Select a user
+            apiOptions:
+              path: /proxy/dummyjson/users
+              method: GET
+              arraySelector: users
+              valueSelector: id
+              labelSelector: username
+            setContextData:
+              selectedUserEmail: email
+              selectedUserFirstName: firstName
+
+        # 2h. Dropdown using POST body
+        postDropdown:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: dropdown
+            title: Post (via POST request)
+            placeholder: Select a post
+            apiOptions:
+              path: /proxy/dummyjson/posts
+              method: GET
+              arraySelector: posts
+              valueSelector: id
+              labelSelector: title
+
+    # ─────────────────────────────────────────────
+    # STEP 3 — BUTTON FIELD use cases
+    # ─────────────────────────────────────────────
+    - title: Button Fields
+      properties:
+
+        # 3a. Primary button — POST action
+        createCart:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: button
+            title: Create Cart
+            buttonText: Create Cart
+            buttonVariation: primary
+            apiAction:
+              path: /proxy/dummyjson/carts/add
+              method: POST
+              body:
+                userId: 1
+                products:
+                  - id: 1
+                    quantity: 1
+              successMessage: Cart created successfully!
+              errorMessage: Failed to create cart.
+
+        # 3b. Secondary button — GET action to fetch and store data
+        fetchUser:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: button
+            title: Fetch User Details
+            buttonText: Load User
+            buttonVariation: secondary
+            apiAction:
+              path: /proxy/dummyjson/users/1
+              method: GET
+              successMessage: User loaded
+              errorMessage: Failed to load user
+            setContextData:
+              fetchedUserEmail: email
+              fetchedUserName: username
+            description: Fetches user #1 and stores email/username into form context
+
+        # 3c. Tertiary button — DELETE action
+        deletePost:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: button
+            title: Delete Post
+            buttonText: Delete Post #1
+            buttonVariation: tertiary
+            apiAction:
+              path: /proxy/dummyjson/posts/1
+              method: DELETE
+              successMessage: Post deleted
+              errorMessage: Could not delete post
+
+        # 3d. Button with dynamic body using form context templating
+        addToCart:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: button
+            title: Add Selected Product to Cart
+            buttonText: Add to Cart
+            buttonVariation: primary
+            apiAction:
+              path: /proxy/dummyjson/carts/add
+              method: POST
+              body:
+                userId: 1
+                products:
+                  - id: '{{ parameters.productByCategory }}'
+                    quantity: 1
+              successMessage: Added to cart!
+              errorMessage: Failed to add to cart
+            messages:
+              loading: Adding...
+
+    # ─────────────────────────────────────────────
+    # STEP 4 — JSON / YAML INPUT FIELD use cases
+    # ─────────────────────────────────────────────
+    - title: JSON / YAML Fields
+      properties:
+
+        # 4a. Plain JSON editor
+        rawConfig:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: json
+            language: json
+            title: Raw Config (JSON)
+            editorHeight: 200px
+            description: Free-form JSON editor backed by Monaco
+
+        # 4b. YAML editor
+        helmValues:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: json
+            language: yaml
+            title: Helm Values (YAML)
+            editorHeight: 250px
+            description: Paste or type your Helm values here
+
+        # 4c. JSON editor with schema validation
+        serviceConfig:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: json
+            language: json
+            title: Service Config (schema validated)
+            editorHeight: 300px
+            jsonSchema:
+              type: object
+              required:
+                - name
+                - port
+              properties:
+                name:
+                  type: string
+                port:
+                  type: number
+                replicas:
+                  type: number
+            messages:
+              schemaError: Config does not match the required schema
+              parseError: Invalid JSON — check your syntax
+
+        # 4d. Read-only JSON viewer (populated from context)
+        userDetailsViewer:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: json
+            language: json
+            title: User Details (read-only, from context)
+            readOnly: true
+            editorHeight: 150px
+            contextKey: fetchedUserEmail
+            description: Populated automatically when you click "Load User" above
+
+        # 4e. JSON with a static defaultValue
+        defaultConfigJson:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: json
+            language: json
+            title: Default Config
+            editorHeight: 200px
+            defaultValue:
+              replicas: 2
+              image: nginx:latest
+              port: 8080
+
+        # 4f. JSON with a templated defaultValue (reads from form context)
+        dynamicDefaultJson:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: json
+            language: json
+            title: Dynamic Default (uses serviceName)
+            readOnly: false
+            editorHeight: 200px
+            defaultValue:
+              name: '{{ parameters.serviceName }}'
+              env: '{{ parameters.environment }}'
+              owner: '{{ parameters.userPicker }}'
+
+        # 4g. JSON that writes parsed fields back into form context
+        contextWriterJson:
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: json
+            language: json
+            title: Config (writes keys to context on parse)
+            editorHeight: 200px
+            setContextData:
+              parsedPort: port
+              parsedReplicas: replicas
+            description: When valid JSON is entered, port and replicas are written to form context
+
+  steps:
+    - id: log
+      name: Log Parameters
+      action: debug:log
+      input:
+        message: 'Creating service: ${{ parameters.serviceName }}'

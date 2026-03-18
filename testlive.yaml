@@ -1,0 +1,29 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: live-validation-demo
+  title: Live Validation Demo
+  description: Simple Backstage form with live validation
+spec:
+  owner: platform-team
+  type: service
+
+  parameters:
+    - title: Project Details
+      description: Basic project input with live validation
+      liveValidate: onChange
+      required:
+        - project_id
+      properties:
+        project_id:
+          type: string
+          title: Project ID
+          description: Lowercase letters, numbers, and dashes only
+          pattern: "^[a-z0-9-]+$"
+
+  steps:
+    - id: log
+      name: Log input
+      action: debug:log
+      input:
+        message: "Project ID: {{ parameters.project_id }}"

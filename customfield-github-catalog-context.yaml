@@ -1,0 +1,126 @@
+# One-step template: CustomField (GitHub username validation onChange + onButton),
+# Dropdown from catalog/entities, ContextViewer, and CustomField JSON from context.
+#
+# Proxy URLs (from app-config):
+#   - GitHub: proxy/github-api  -> https://api.github.com
+#   - Catalog: backend serves catalog; use path catalog/entities (Backstage catalog backend)
+#
+# Flow: Dropdown (catalog entities) -> setContextData selected_entity
+#       -> ContextViewer shows selection -> CustomField JSON (contextKey) shows same data
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: customfield-github-catalog-context
+  title: CustomField — GitHub validation, Catalog dropdown, ContextViewer & JSON
+  description: >
+    One step: GitHub username validation (onChange and onButton), dropdown from
+    catalog/entities, ContextViewer showing selected entity, CustomField JSON
+    populated from context.
+spec:
+  owner: group:default/platform-engineering
+  type: service
+  parameters:
+    - title: "All in one step"
+      description: >
+        (1) Validate GitHub username (onChange + onButton). (2) Pick an entity
+        from catalog. (3) ContextViewer shows it. (4) JSON field shows same from context.
+      required:
+        - github_username_onchange
+        - github_username_onbutton
+        - catalog_entity
+      properties:
+        # ─── CustomField text: validate GitHub user exists — onChange ───
+        github_username_onchange:
+          title: GitHub username (validate on type)
+          type: string
+          description: Validates against GitHub API on every change (proxy/github-api).
+          ui:field: CustomField
+          ui:options:
+            fieldType: text
+            title: GitHub username (onChange)
+            placeholder: e.g. octocat
+            apiValidation:
+              path: proxy/github-api/users/{{ value }}
+              method: GET
+              responseValidPath: login
+              errorMessagePath: message
+            apiValidationTrigger: onChange
+            debounceMs: 500
+            messages:
+              success: GitHub user exists
+              apiError: User not found or API error
+
+        # ─── CustomField text: validate GitHub user exists — onButton ───
+        github_username_onbutton:
+          title: GitHub username (validate on button)
+          type: string
+          description: Validates when you click the button.
+          ui:field: CustomField
+          ui:options:
+            fieldType: text
+            title: GitHub username (onButton)
+            placeholder: e.g. backstage
+            apiValidation:
+              path: proxy/github-api/users/{{ value }}
+              method: GET
+              responseValidPath: login
+              errorMessagePath: message
+            apiValidationTrigger: onButton
+            validateButtonText: Check user exists
+            messages:
+              success: GitHub user exists
+              apiError: User not found or API error
+
+        # ─── Dropdown from catalog/entities; store selected entity in context ───
+        catalog_entity:
+          title: Catalog entity
+          type: string
+          description: Select an entity from the catalog. Selection is stored in context and shown below.
+          ui:field: SelectFieldFromApi
+          ui:options:
+            path: catalog/entities
+            params:
+              limit: "50"
+            arraySelector: items
+            valueSelector: metadata.name
+            labelSelector: metadata.title
+            allowArbitraryValues: false
+            placeholder: Select an entity…
+            setContextData:
+              selected_entity: ""
+              selected_entity_ref: metadata.name
+
+        # ─── ContextViewer: show selected entity ref (from context) ───
+        entity_display:
+          title: Selected entity (ContextViewer)
+          type: string
+          description: Displays the selected entity ref from context.
+          readonly: true
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: "${{ context.selected_entity_ref }}"
+
+        # ─── CustomField JSON: populated from context (same as dropdown selection) ───
+        entity_json:
+          title: Entity as JSON (from context)
+          type: string
+          description: Populated from context.selected_entity; same data as the dropdown selection.
+          ui:field: CustomField
+          ui:options:
+            fieldType: json
+            contextKey: selected_entity
+            readOnly: true
+            title: Selected entity JSON
+            editorHeight: 280px
+
+  steps:
+    - id: echo
+      name: Echo
+      action: debug:log
+      input:
+        message: |
+          GitHub (onChange): ${{ parameters.github_username_onchange }}
+          GitHub (onButton): ${{ parameters.github_username_onbutton }}
+          Catalog entity: ${{ parameters.catalog_entity }}
+  output:
+    links: []

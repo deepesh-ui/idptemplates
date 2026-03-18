@@ -1,0 +1,427 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# TEST ALL TEMPLATES, WIDGETS & CUSTOM SCAFFOLDER COMPONENTS
+# ═══════════════════════════════════════════════════════════════════════════════
+# Generated from analysis of client YAML patterns in:
+#   - master-sanity.yaml (Master Sanity Validator — conditionals, Harness pickers, API fields)
+#   - united.yaml (HarnessAuthToken+password, HarnessProjectPicker, HarnessAutoOrgPicker, SelectFieldFromApi, checkboxes)
+#   - directtv.yaml (ValidateAndFetch, ContextViewer getContextData/setContextData, hidden widget)
+#   - cdk.yaml (HarnessUserGroupPicker, OwnerPicker, textarea, radio, SelectFieldFromApi in conditionals)
+#
+# Patterns applied:
+#   - Step-based parameter sections with required fields (triggers ErrorListTemplate when empty)
+#   - Harness pickers: HarnessAuthToken (password/hidden), HarnessProjectPicker, HarnessOrgPicker,
+#     HarnessAutoOrgPicker (often hidden), HarnessUserGroupPicker (filterByUserMembership), HarnessOwnerPicker
+#   - API-driven: SelectFieldFromApi (path, arraySelector, valueSelector, labelSelector, allowArbitraryValues,
+#     setContextData, params, chained path with {{ parameters.x }})
+#   - ContextViewer with getContextData: "${{ formContext.* }}" or "${{ context.* }}"
+#   - ValidateAndFetch with button.title, path, setContextData, successMessage, errorMessage
+#   - ui:widget: hidden for auto-resolved fields; enum + enumNames for select
+#   - Conditional schemas: dependencies.oneOf (branch-specific required fields)
+#
+# Covers all Stepper.tsx: ErrorListTemplate, BaseInputTemplate (HarnessTextWidget), ArrayFieldTemplate,
+# ObjectFieldTemplate; widgets: password, select, checkbox, textarea, radio, updown, range, email, uri,
+# date, time, date-time, datetime-local, color, file, data-url, checkboxes; custom fields: HarnessAuthToken,
+# HarnessProjectPicker, HarnessOrgPicker, HarnessAutoOrgPicker, HarnessOwnerPicker, HarnessUserGroupPicker,
+# EntityFieldPicker, SelectFieldFromApi, ValidateAndFetch, ContextViewer, HarnessEntitySelector, CustomField.
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: test-all-components
+  title: "Test All Components — Templates, Widgets & Custom Fields"
+  description: >
+    Single template to validate every Harness IDP scaffolder template, widget and
+    custom field. Based on patterns from master-sanity, united, directtv and cdk client YAMLs.
+  tags:
+    - test
+    - sanity
+    - scaffolder
+    - harness-idp
+spec:
+  owner: group:default/platform-engineering
+  type: service
+
+  parameters:
+    # ─── Step 1: Core Harness identity + BaseInputTemplate / ErrorListTemplate ───
+    - title: "Step 1: Harness identity & text (BaseInputTemplate)"
+      description: Required fields trigger ErrorListTemplate when empty.
+      required:
+        - appName
+        - authToken
+        - projectId
+        - orgId
+        - userGroup
+      properties:
+        appName:
+          title: Application Name (required — BaseInputTemplate)
+          type: string
+          minLength: 3
+          maxLength: 40
+          pattern: "^[a-z0-9-]+$"
+        authToken:
+          title: Auth Token
+          type: string
+          ui:field: HarnessAuthToken
+          ui:widget: hidden
+        projectId:
+          title: Project
+          type: string
+          ui:field: HarnessProjectPicker
+        orgId:
+          title: Org (auto-resolved)
+          type: string
+          ui:field: HarnessAutoOrgPicker
+          ui:widget: hidden
+        techArea:
+          title: Tech Area / Organisation
+          type: string
+          ui:field: HarnessOrgPicker
+          ui:autofocus: true
+        userGroup:
+          title: Owning User Group
+          type: string
+          ui:field: HarnessUserGroupPicker
+          ui:options:
+            filterByUserMembership: true
+            includeChildScopes: true
+        ownerPicker:
+          title: Owner
+          type: string
+          ui:field: HarnessOwnerPicker
+        dbPassword:
+          title: Database Password
+          type: string
+          minLength: 8
+          ui:widget: password
+        ownerEmail:
+          title: Owner Email
+          type: string
+          format: email
+          ui:widget: email
+
+    # ─── Step 2: API-driven fields (SelectFieldFromApi, ContextViewer, ValidateAndFetch) ───
+    - title: "Step 2: API-driven fields (client pattern)"
+      description: SelectFieldFromApi, ContextViewer getContextData/setContextData, ValidateAndFetch.
+      required:
+        - productCategory
+      properties:
+        currentUser:
+          title: Current User
+          type: string
+          readonly: true
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: "${{ formContext.user.name }}"
+        productCategory:
+          title: Product Category
+          type: string
+          ui:field: SelectFieldFromApi
+          ui:options:
+            path: proxy/dummyjson/products/category-list
+            allowArbitraryValues: false
+        selectedProduct:
+          title: Product (chained)
+          type: string
+          ui:field: SelectFieldFromApi
+          ui:options:
+            path: "proxy/dummyjson/products/category/{{ parameters.productCategory }}"
+            arraySelector: products
+            valueSelector: title
+            labelSelector: title
+            allowArbitraryValues: true
+            placeholder: Select a product…
+        branchSelector:
+          title: Branch (+ setContextData)
+          type: string
+          ui:field: SelectFieldFromApi
+          ui:options:
+            path: proxy/github-api/repos/backstage/backstage/branches?per_page=15
+            valueSelector: name
+            labelSelector: name
+            allowArbitraryValues: false
+            setContextData:
+              branch_sha: commit.sha
+              branch_name: name
+        branchShaDisplay:
+          title: Branch SHA (from context)
+          type: string
+          readonly: true
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: "${{ context.branch_sha }}"
+        accessValidation:
+          title: Access Validation
+          type: string
+          ui:field: ValidateAndFetch
+          ui:options:
+            button:
+              title: Validate My Access
+            path: proxy/harness-api/ng/api/user/currentUser
+            params:
+              accountIdentifier: px7xd_BFRCi-pfWPYXVjvw
+            valueSelector: data.name
+            successMessage: "Access confirmed for: {{ value }}"
+            errorMessage: Validation failed.
+
+    # ─── Step 3: All UI widgets + enum/enumNames (client pattern) ───
+    - title: "Step 3: UI widgets zoo"
+      description: select, radio, checkboxes, checkbox, textarea, updown, range, email, uri, date, time, date-time, color, file, data-url.
+      required:
+        - deployRegion
+        - logLevel
+        - notificationChannels
+        - enableFeatureFlag
+        - replicaCount
+        - releaseNotes
+      properties:
+        deployRegion:
+          title: Deploy Region
+          type: string
+          enum:
+            - us-east-1
+            - us-west-2
+            - eu-west-1
+            - ap-southeast-1
+          enumNames:
+            - "US East (N. Virginia)"
+            - "US West (Oregon)"
+            - "EU West (Ireland)"
+            - "AP Southeast (Singapore)"
+          ui:widget: select
+        logLevel:
+          title: Log Level
+          type: string
+          default: INFO
+          enum:
+            - DEBUG
+            - INFO
+            - WARN
+            - ERROR
+          ui:widget: radio
+        notificationChannels:
+          title: Notification Channels
+          type: array
+          items:
+            type: string
+            enum:
+              - slack
+              - email
+              - pagerduty
+              - webhook
+          uniqueItems: true
+          ui:widget: checkboxes
+        enableFeatureFlag:
+          title: Enable Feature Flag
+          type: boolean
+          default: false
+          ui:widget: checkbox
+        replicaCount:
+          title: Replica Count
+          type: integer
+          default: 2
+          minimum: 1
+          maximum: 20
+        updownField:
+          title: UpDown
+          type: integer
+          default: 0
+          ui:widget: updown
+        rangeField:
+          title: Range
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 50
+          ui:widget: range
+        releaseNotes:
+          title: Release Notes
+          type: string
+          minLength: 10
+          maxLength: 2000
+          ui:widget: textarea
+          ui:options:
+            rows: 6
+        uriField:
+          title: URL
+          type: string
+          format: uri
+          ui:widget: uri
+        dateField:
+          title: Date
+          type: string
+          format: date
+          ui:widget: date
+        timeField:
+          title: Time
+          type: string
+          format: time
+          ui:widget: time
+        dateTimeField:
+          title: Date-time
+          type: string
+          format: date-time
+          ui:widget: date-time
+        dateTimeLocalField:
+          title: Datetime local
+          type: string
+          format: date-time
+          ui:widget: datetime-local
+        colorField:
+          title: Color
+          type: string
+          ui:widget: color
+        fileField:
+          title: File
+          type: string
+          ui:widget: file
+        dataUrlField:
+          title: Data URL
+          type: string
+          ui:widget: data-url
+
+    # ─── Step 4: ObjectFieldTemplate & ArrayFieldTemplate ───
+    - title: "Step 4: Object & array templates"
+      description: HarnessObjectFieldTemplate, HarnessArrayFieldTemplate.
+      properties:
+        nestedObject:
+          title: Nested object (ObjectFieldTemplate)
+          type: object
+          properties:
+            name:
+              type: string
+              title: Name
+            count:
+              type: integer
+              title: Count
+              default: 1
+        stringArray:
+          title: List of strings (ArrayFieldTemplate)
+          type: array
+          items:
+            type: string
+            title: Item
+        envVars:
+          title: Environment variables (array of objects)
+          type: array
+          items:
+            type: object
+            required:
+              - key
+              - value
+            properties:
+              key:
+                title: Key
+                type: string
+                pattern: "^[A-Z_][A-Z0-9_]*$"
+              value:
+                title: Value
+                type: string
+
+    # ─── Step 5: EntityFieldPicker, HarnessEntitySelector, CustomField ───
+    - title: "Step 5: Entity & custom field components"
+      properties:
+        entityFieldPicker:
+          title: Entity Field Picker
+          type: string
+          ui:field: EntityFieldPicker
+          ui:options:
+            displayField: metadata.name
+        harnessEntitySelector:
+          title: Harness Entity Selector
+          type: string
+          ui:field: HarnessEntitySelector
+          ui:options:
+            path: proxy/dummyjson/products?limit=5
+            method: GET
+            arraySelector: products
+            valueSelector: id
+            labelSelector: title
+        customFieldText:
+          title: Custom Field (text)
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: text
+            placeholder: Enter text
+        customFieldDropdown:
+          title: Custom Field (dropdown)
+          type: string
+          ui:field: CustomField
+          ui:options:
+            fieldType: dropdown
+            options:
+              - label: Option 1
+                value: v1
+              - label: Option 2
+                value: v2
+
+    # ─── Step 6: Conditional schema (client pattern — dependencies.oneOf) ───
+    - title: "Step 6: Conditional (oneOf) — live validation"
+      description: Switch channel; only active branch required fields show errors.
+      required:
+        - notificationType
+      properties:
+        notificationType:
+          title: Notification Channel
+          type: string
+          enum:
+            - slack
+            - email
+            - pagerduty
+          enumNames:
+            - Slack
+            - Email
+            - PagerDuty
+      dependencies:
+        notificationType:
+          oneOf:
+            - properties:
+                notificationType:
+                  const: slack
+                slackWorkspace:
+                  title: Slack Workspace
+                  type: string
+                  pattern: "^[a-z0-9-]+\\.slack\\.com$"
+                slackChannel:
+                  title: Slack Channel
+                  type: string
+                  minLength: 2
+              required:
+                - slackWorkspace
+                - slackChannel
+            - properties:
+                notificationType:
+                  const: email
+                emailRecipients:
+                  title: Email Recipients
+                  type: string
+              required:
+                - emailRecipients
+            - properties:
+                notificationType:
+                  const: pagerduty
+                pagerdutyServiceKey:
+                  title: PagerDuty Service Key
+                  type: string
+                  minLength: 32
+                  maxLength: 32
+              required:
+                - pagerdutyServiceKey
+
+  steps:
+    - id: echo
+      name: Echo
+      action: debug:log
+      input:
+        message: |
+          App: ${{ parameters.appName }}
+          Project: ${{ parameters.projectId }}
+          Region: ${{ parameters.deployRegion }}
+          Notifications: ${{ parameters.notificationType }}
+    - id: register
+      name: Register
+      action: catalog:register
+      input:
+        catalogInfoUrl: 'https://github.com/backstage/backstage/blob/master/catalog-info.yaml'
+  output:
+    links: []

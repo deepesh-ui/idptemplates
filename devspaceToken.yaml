@@ -29,7 +29,7 @@ spec:
         # url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/all/orgs/default/projects/idpprojectsc/pipelines/DummyPipeline/pipeline-studio/?repoIdentifier=null&branch=null&storeType=INLINE
         url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/module/cd/orgs/IDP/projects/Deepesh_CDE/pipelines/remote_pipeline_with_remote_stage_template/pipeline-studio/?storeType=REMOTE&connectorRef=account.deepesh&repoName=idptest&branch=main
         inputset:
-          "pipeline.variables.username": ${{ parameters.username }}
+          username: ${{ parameters.username }}
         apikey: ${{ parameters.token }}
   output:
     links:

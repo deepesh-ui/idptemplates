@@ -1,0 +1,98 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: async-validation-race-test
+  title: Async Validation Race Condition Test
+  description: |
+    Tests the filteredExtraErrors race condition where async validation
+    errors briefly disappear between two React state updates.
+    
+    Bug: setErrors() and setTouchedFields() are called sequentially in
+    handleNext (async context). React 17 doesn't batch these, so there's
+    an intermediate render where errors exist but touchedFields hasn't
+    been updated yet — filteredExtraErrors returns undefined.
+spec:
+  owner: group:platform
+  type: service
+  parameters:
+    - title: "Step 1: Trigger Async Validation Error"
+      description: |
+        TEST STEPS:
+        1. Fill "App Name" with a valid value (e.g. "my-app")
+        2. In "Harness Project" select any project from the dropdown
+        3. Do NOT fill "Cloud Provider" (leave it empty — it's required)
+        4. Click Next
+        
+        EXPECTED: "Cloud Provider" shows a required error (schema validation blocks)
+        
+        Now for the ASYNC race condition test:
+        1. Fill ALL three required fields (App Name, Project, Cloud Provider)
+        2. Open browser DevTools Console
+        3. Add this code to instrument the race:
+           
+           const origSetState = React.useState;
+           // Or just watch the Network tab for the async validator call
+        
+        4. Click Next — async validators run for HarnessProjectPicker
+           and SelectFieldFromApi
+        5. If async validation returns an error, watch for a brief flash
+           where the error disappears then reappears
+      required:
+        - appName
+        - projectId
+        - cloudProvider
+      properties:
+        appName:
+          title: App Name
+          type: string
+          minLength: 3
+          pattern: ^[a-z][a-z0-9-]*$
+        projectId:
+          title: Harness Project
+          type: string
+          ui:field: HarnessProjectPicker
+        orgId:
+          title: Org ID
+          type: string
+          ui:field: HarnessAutoOrgPicker
+          ui:widget: hidden
+        cloudProvider:
+          title: Cloud Provider
+          description: Select a cloud provider. If the API fails, this will trigger an async validation error.
+          type: string
+          ui:field: SelectFieldFromApi
+          ui:options:
+            path: proxy/dummyjson/products/category-list
+            allowArbitraryValues: false
+    - title: "Step 2: Verify Error Display"
+      description: |
+        If you reached this step, async validation passed.
+        Go back to Step 1 and try these scenarios:
+        
+        SCENARIO A — Force async error:
+        1. Select a project that doesn't exist or an invalid token
+        2. Click Next
+        3. Watch if the error flashes (appears, disappears, reappears)
+        
+        SCENARIO B — Observe with console.log:
+        Add this to Stepper.tsx handleNext (after setIsValidating(false)):
+          console.log('errors:', returnedValidation);
+          console.log('touchedFields before:', touchedFields);
+        
+        And add to filteredExtraErrors useMemo:
+          console.log('filteredExtraErrors computing:', { errors, touchedSize: touchedFields.size });
+        
+        You should see TWO filteredExtraErrors logs:
+        1st: errors present, touchedFields missing the error key → returns undefined
+        2nd: errors present, touchedFields has the key → returns the error
+      properties:
+        confirmation:
+          title: Test Complete
+          type: boolean
+          default: false
+  steps:
+    - id: log
+      name: Log
+      action: debug:log
+      input:
+        message: "Async validation race test complete"

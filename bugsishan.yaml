@@ -1,0 +1,1109 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: comprehensive-validation-test-workflow
+  title: ComprehensiveValidationTestWorkflowAllCustomerPatterns
+  description: |
+    Production-ready validation test workflow combining patterns from CDK (115 templates), DirecTV (67 templates), and United (100 templates). Tests every conditional schema pattern, widget type, Harness custom field, and live validation edge case found across real customer workflows.
+  tags:
+    - validation
+    - comprehensive-test
+    - live-validation
+    - harness-idp
+    - production-patterns
+spec:
+  owner: group:default/platform_engineering
+  type: workflow
+  lifecycle: experimental
+
+  output:
+    text:
+      - title: Workflow Summary
+        content: |
+          **Application:** ${{ parameters.appName }}
+          **Action:** ${{ parameters.action }}
+          **Environment Type:** ${{ parameters.environmentType }}
+          **Deploy Region:** ${{ parameters.deployRegion }}
+          **Log Level:** ${{ parameters.logLevel }}
+          **Feature Flag Enabled:** ${{ parameters.enableFeatureFlag }}
+          **Operation Type:** ${{ parameters.operationType }}
+    links:
+      - title: View Pipeline Execution
+        url: "https://qa.harness.io/ng/account/${{ parameters.accountId }}/cd/orgs/${{ parameters.orgId }}/projects/${{ parameters.projectId }}/pipelines"
+        icon: pipeline
+      - title: View in Catalog
+        url: "https://localhost:8181/ng/account/${{ parameters.accountId }}/module/idp/catalog/default/component/${{ parameters.appName }}"
+        icon: catalog
+
+  parameters:
+    # ─────────────────────────────────────────────────────────────────
+    # STEP 1 — Harness Identity & Authentication
+    # ─────────────────────────────────────────────────────────────────
+    - title: "Step 1: Harness Identity & Authentication"
+      description: |
+        Tests all Harness-specific picker components and authentication patterns found across CDK, DirecTV, and United customer workflows.
+      required:
+        - token
+        - projectId
+        - orgId
+        - appName
+        - ownerEmail
+      properties:
+        token:
+          title: Harness Token
+          description: Auto-injected Harness authentication token.
+          type: string
+          ui:field: HarnessAuthToken
+          ui:widget: password
+        projectId:
+          title: Project Name
+          description: Select the Harness project from the dropdown.
+          type: string
+          ui:field: HarnessProjectPicker
+          ui:options:
+            setContextData:
+              selected_project: projectId
+        orgId:
+          title: Org Identifier
+          description: Auto-resolved from selected project.
+          type: string
+          ui:field: HarnessAutoOrgPicker
+          ui:widget: hidden
+        techArea:
+          title: Tech Area / Organisation
+          description: "Select the technology area (e.g., CloudPlatform, DataEngineering, Security)"
+          type: string
+          ui:field: HarnessOrgPicker
+          ui:autofocus: true
+        userGroup:
+          title: Owning User Group
+          description: Select the user group that owns this resource.
+          type: string
+          ui:field: HarnessUserGroupPicker
+          ui:options:
+            filterByUserMembership: true
+            includeChildScopes: true
+        currentUser:
+          title: Current User
+          description: Your Harness identity (read-only).
+          type: string
+          readonly: true
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: "${{ formContext.user.name }}"
+        currentUserEmail:
+          title: Current User Email
+          description: Your email address (read-only).
+          type: string
+          readonly: true
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: "${{ formContext.user.email }}"
+        apiSecret:
+          title: API Secret / Token
+          description: Enter a secret value — stored securely, never echoed.
+          type: string
+          ui:field: Secret
+        accountId:
+          title: Account ID
+          description: Injected by the platform — not editable.
+          type: string
+          default: px7xd_BFRCi-pfWPYXVjvw
+          ui:widget: hidden
+        appName:
+          title: Application Name
+          description: Lowercase letters, numbers and hyphens only. 3–63 chars.
+          type: string
+          minLength: 3
+          maxLength: 63
+          pattern: "^[a-z][a-z0-9-]*[a-z0-9]$"
+          ui:autofocus: false
+          ui:placeholder: e.g. my-cool-service
+          ui:help: Must start with a letter, end with alphanumeric.
+        ownerEmail:
+          title: Owner Email
+          description: Must be a valid email address.
+          type: string
+          format: email
+          ui:placeholder: owner@company.com
+        dbPassword:
+          title: Database Password
+          description: Enter DB password (masked input).
+          type: string
+          minLength: 8
+          ui:widget: password
+
+    # ─────────────────────────────────────────────────────────────────
+    # STEP 2 — Dynamic API-Driven Fields & Context
+    # ─────────────────────────────────────────────────────────────────
+    - title: "Step 2: Dynamic API-Driven Fields & Context"
+      description: |
+        Tests SelectFieldFromApi in all variants (chained, setContextData, params, arraySelector), ValidateAndFetch click-to-validate, and ContextViewer reading both formContext and setContextData.
+      required:
+        - productCategory
+        - selectedProduct
+      properties:
+        productCategory:
+          title: Product Category
+          description: Select a category (fetched live from DummyJSON).
+          type: string
+          ui:field: SelectFieldFromApi
+          ui:options:
+            path: proxy/dummyjson/products/category-list
+            allowArbitraryValues: false
+        selectedProduct:
+          title: Product
+          description: Products filtered by the category you selected above.
+          type: string
+          ui:field: SelectFieldFromApi
+          ui:options:
+            path: "proxy/dummyjson/products/category/{{ parameters.productCategory }}"
+            arraySelector: products
+            valueSelector: title
+            labelSelector: title
+            allowArbitraryValues: true
+            placeholder: Select a product…
+        githubBranch:
+          title: GitHub Branch (+ stores SHA)
+          description: Selects a branch; also stores its SHA into context.
+          type: string
+          ui:field: SelectFieldFromApi
+          ui:options:
+            path: proxy/github-api/repos/backstage/backstage/branches?per_page=15
+            valueSelector: name
+            labelSelector: name
+            allowArbitraryValues: false
+            placeholder: Select branch…
+            setContextData:
+              branch_sha: commit.sha
+              branch_name: name
+        branchShaDisplay:
+          title: Branch SHA (from context)
+          description: Auto-populated from the branch selection above.
+          type: string
+          readonly: true
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: "${{ context.branch_sha }}"
+        harnessProject:
+          title: Harness Project (via params)
+          description: Fetches Harness projects using query params.
+          type: string
+          ui:field: SelectFieldFromApi
+          ui:options:
+            path: proxy/harness-api/ng/api/projects
+            params:
+              accountIdentifier: px7xd_BFRCi-pfWPYXVjvw
+            arraySelector: data.content
+            valueSelector: project.identifier
+            labelSelector: project.name
+            allowArbitraryValues: true
+        validateAccess:
+          title: Access Validation
+          description: Click the button to validate your access.
+          type: string
+          ui:field: ValidateAndFetch
+          ui:options:
+            button:
+              title: Validate My Access
+            path: proxy/harness-api/ng/api/user/currentUser
+            params:
+              accountIdentifier: px7xd_BFRCi-pfWPYXVjvw
+            valueSelector: data.name
+            successMessage: "Access confirmed for: {{ value }}"
+            errorMessage: Validation failed — you may not have the required permissions.
+
+    # ─────────────────────────────────────────────────────────────────
+    # STEP 3 — CDK Pattern: Create/Update/Delete Operations
+    # ─────────────────────────────────────────────────────────────────
+    - title: "Step 3: CDK Pattern — Create/Update/Delete Operations"
+      description: |
+        Tests the CDK Golden S3 pattern with action-based dependencies (create/update/delete), arrays with object items, nested dependencies within array items, and ui:readonly for update mode fields.
+      required:
+        - action
+      properties:
+        action:
+          title: Select the Action
+          description: What action needs to be performed.
+          type: string
+          default: create
+          enum:
+            - create
+            - update
+            - delete
+          enumNames:
+            - Create New Resources
+            - Update Existing Resources
+            - Delete Resources
+      dependencies:
+        action:
+          oneOf:
+            # ── CREATE branch ──
+            - properties:
+                action:
+                  enum:
+                    - create
+                deploymentName:
+                  title: Enter Deployment Name
+                  type: string
+                  description: Enter user friendly deployment name.
+                  minLength: 3
+                  maxLength: 40
+                  pattern: "^[a-z][a-z0-9-]*[a-z0-9]$"
+                cloudProvider:
+                  type: string
+                  title: Cloud Provider
+                  ui:field: SelectFieldFromApi
+                  ui:options:
+                    allowArbitraryValues: true
+                    title: Cloud Provider
+                    description: Select the cloud provider.
+                    path: proxy/dummyjson/products?limit=5
+                    arraySelector: products
+                    valueSelector: title
+                    labelSelector: title
+                resourcesCreate:
+                  type: array
+                  title: Resource Configuration (Create Mode)
+                  minItems: 1
+                  maxItems: 5
+                  items:
+                    type: object
+                    required:
+                      - resourceName
+                      - environment
+                    properties:
+                      resourceName:
+                        title: Resource Name
+                        type: string
+                        description: Name for your resource.
+                        minLength: 3
+                        pattern: "^[a-z][a-z0-9-]*$"
+                      environment:
+                        title: Environment
+                        type: string
+                        enum:
+                          - dev
+                          - qa
+                          - stage
+                          - perf
+                          - prod
+                      resourceTags:
+                        type: array
+                        title: Resource Tags
+                        items:
+                          type: object
+                          required:
+                            - key
+                            - value
+                          properties:
+                            key:
+                              type: string
+                              title: Tag Key
+                              pattern: "^[a-zA-Z0-9_-]+$"
+                            value:
+                              type: string
+                              title: Tag Value
+                      showAdvanced:
+                        title: Show Advanced Options
+                        type: boolean
+                        default: false
+                    dependencies:
+                      showAdvanced:
+                        oneOf:
+                          - properties:
+                              showAdvanced:
+                                const: false
+                          - properties:
+                              showAdvanced:
+                                const: true
+                              enableVersioning:
+                                title: Enable Versioning
+                                type: boolean
+                                default: false
+                                description: Enable versioning for this resource.
+                              enableReplication:
+                                title: Enable Replication
+                                type: boolean
+                                default: false
+                                description: Enable cross-region replication.
+                              replicaRegion:
+                                title: Replica Region
+                                type: string
+                                enum:
+                                  - us-east-1
+                                  - us-west-2
+                                  - eu-west-1
+                                description: Target region for replication.
+              required:
+                - deploymentName
+                - resourcesCreate
+
+            # ── UPDATE branch ──
+            - properties:
+                action:
+                  enum:
+                    - update
+                deploymentNameUpdate:
+                  title: Deployment Name (Read-only)
+                  type: string
+                  description: Deployment name cannot be changed during update.
+                  ui:readonly: true
+                primaryOwner:
+                  title: Primary Owner
+                  type: string
+                  description: Primary Owner (hidden).
+                  ui:widget: hidden
+                cloudProviderUpdate:
+                  type: string
+                  title: Cloud Provider (Read-only)
+                  ui:readonly: true
+                resourcesUpdate:
+                  type: array
+                  title: Resource Configuration (Update Mode)
+                  minItems: 1
+                  ui:options:
+                    addable: false
+                    orderable: false
+                    removable: false
+                  items:
+                    type: object
+                    required:
+                      - resourceName
+                      - environment
+                    properties:
+                      resourceName:
+                        title: Resource Name (Read-only)
+                        type: string
+                        ui:readonly: true
+                      environment:
+                        title: Environment
+                        type: string
+                        enum:
+                          - dev
+                          - qa
+                          - stage
+                          - perf
+                          - prod
+                      resourceTags:
+                        type: array
+                        title: Resource Tags
+                        items:
+                          type: object
+                          required:
+                            - key
+                            - value
+                          properties:
+                            key:
+                              type: string
+                              title: Tag Key
+                              pattern: "^[a-zA-Z0-9_-]+$"
+                            value:
+                              type: string
+                              title: Tag Value
+                      showAdvanced:
+                        title: Show Advanced Options
+                        type: boolean
+                        default: false
+                    dependencies:
+                      showAdvanced:
+                        oneOf:
+                          - properties:
+                              showAdvanced:
+                                const: false
+                          - properties:
+                              showAdvanced:
+                                const: true
+                              enableVersioning:
+                                title: Enable Versioning
+                                type: boolean
+                                default: false
+                              enableReplication:
+                                title: Enable Replication
+                                type: boolean
+                                default: false
+              required:
+                - deploymentNameUpdate
+                - resourcesUpdate
+
+            # ── DELETE branch ──
+            - properties:
+                action:
+                  enum:
+                    - delete
+                deploymentNameDelete:
+                  title: Deployment Name (Read-only)
+                  type: string
+                  description: Deployment name cannot be changed.
+                  ui:readonly: true
+                deleteConfirmation:
+                  title: Delete Confirmation
+                  description: Type DELETE to confirm permanent removal.
+                  type: string
+                  pattern: "^DELETE$"
+              required:
+                - deploymentNameDelete
+                - deleteConfirmation
+
+    # ─────────────────────────────────────────────────────────────────
+    # STEP 4 — United Pattern: Multi-Environment with allOf + contains
+    # ─────────────────────────────────────────────────────────────────
+    - title: "Step 4: United Pattern — Multi-Environment Selection with allOf"
+      description: |
+        Tests the United Kong certificate pattern with array selection (checkboxes), allOf with multiple if/then blocks checking array.contains, and independent conditional field revelation for each selected environment.
+      required:
+        - certificateTypes
+        - selectedEnvironments
+      properties:
+        certificateTypes:
+          type: array
+          title: Certificate Types
+          description: Select at least one certificate type.
+          items:
+            type: string
+            enum:
+              - Gateway
+              - Konnect
+            enumNames:
+              - Gateway (API traffic certificates)
+              - Konnect (Control plane certificates)
+          default:
+            - Gateway
+          minItems: 1
+          uniqueItems: true
+          ui:widget: checkboxes
+        selectedEnvironments:
+          type: array
+          title: Deployment Environments
+          description: Select environments for deployment.
+          items:
+            type: string
+            enum:
+              - dev
+              - qa
+              - stg
+              - prd
+            enumNames:
+              - Development
+              - QA
+              - Staging
+              - Production
+          minItems: 1
+          uniqueItems: true
+          ui:widget: checkboxes
+          ui:help: Select at least one environment - fields will appear below for each.
+      dependencies:
+        selectedEnvironments:
+          allOf:
+            - if:
+                properties:
+                  selectedEnvironments:
+                    contains:
+                      const: dev
+              then:
+                properties:
+                  devAwsAccount:
+                    type: string
+                    title: Dev AWS Account (12 digits)
+                    description: AWS Account Number for Development environment.
+                    pattern: "^\\d{12}$"
+                    minLength: 12
+                    maxLength: 12
+                    ui:placeholder: "299582870167"
+                    ui:help: Must be exactly 12 digits.
+                required:
+                  - devAwsAccount
+            - if:
+                properties:
+                  selectedEnvironments:
+                    contains:
+                      const: qa
+              then:
+                properties:
+                  qaAwsAccount:
+                    type: string
+                    title: QA AWS Account (12 digits)
+                    description: AWS Account Number for QA environment.
+                    pattern: "^\\d{12}$"
+                    minLength: 12
+                    maxLength: 12
+                    ui:placeholder: "299582870168"
+                    ui:help: Must be exactly 12 digits.
+                required:
+                  - qaAwsAccount
+            - if:
+                properties:
+                  selectedEnvironments:
+                    contains:
+                      const: stg
+              then:
+                properties:
+                  stgAwsAccount:
+                    type: string
+                    title: Staging AWS Account (12 digits)
+                    description: AWS Account Number for Staging environment.
+                    pattern: "^\\d{12}$"
+                    minLength: 12
+                    maxLength: 12
+                    ui:placeholder: "299582870169"
+                    ui:help: "Staging always pushes to BOTH regions (us-east-1 & us-east-2)."
+                required:
+                  - stgAwsAccount
+            - if:
+                properties:
+                  selectedEnvironments:
+                    contains:
+                      const: prd
+              then:
+                properties:
+                  prdAwsAccount:
+                    type: string
+                    title: Production AWS Account (12 digits)
+                    description: AWS Account Number for Production environment.
+                    pattern: "^\\d{12}$"
+                    minLength: 12
+                    maxLength: 12
+                    ui:placeholder: "299582870170"
+                    ui:help: Production requires manual approval before deployment.
+                required:
+                  - prdAwsAccount
+        certificateTypes:
+          allOf:
+            - if:
+                properties:
+                  certificateTypes:
+                    contains:
+                      const: Gateway
+                  selectedEnvironments:
+                    contains:
+                      const: dev
+              then:
+                properties:
+                  devAcmRegions:
+                    type: string
+                    title: Dev ACM Push Regions
+                    description: Select which AWS regions to push gateway certificate to ACM.
+                    default: "Both (us-east-1 & us-east-2)"
+                    enum:
+                      - "Both (us-east-1 & us-east-2)"
+                      - us-east-1
+                      - us-east-2
+                    enumNames:
+                      - Both Regions
+                      - US East 1 Only
+                      - US East 2 Only
+                    ui:help: Certificate contains SANs for both regions. This controls push location.
+                required:
+                  - devAcmRegions
+            - if:
+                properties:
+                  certificateTypes:
+                    contains:
+                      const: Gateway
+                  selectedEnvironments:
+                    contains:
+                      const: qa
+              then:
+                properties:
+                  qaAcmRegions:
+                    type: string
+                    title: QA ACM Push Regions
+                    description: Select which AWS regions to push gateway certificate to ACM.
+                    default: "Both (us-east-1 & us-east-2)"
+                    enum:
+                      - "Both (us-east-1 & us-east-2)"
+                      - us-east-1
+                      - us-east-2
+                    ui:help: Certificate contains SANs for both regions.
+                required:
+                  - qaAcmRegions
+
+    # ─────────────────────────────────────────────────────────────────
+    # STEP 5 — DirecTV Pattern: Deeply Nested Dependencies
+    # ─────────────────────────────────────────────────────────────────
+    - title: "Step 5: DirecTV Pattern — Deeply Nested Dependencies"
+      description: |
+        Tests the DirecTV production deployment pattern with 4-5 levels of nested dependencies. Each selection reveals the next level of conditional fields. This is the most complex conditional pattern in production.
+      required:
+        - environmentType
+      properties:
+        environmentType:
+          title: Environment Type
+          type: string
+          description: Select deployment environment.
+          enum:
+            - dev
+            - test
+            - stage
+            - prod
+      dependencies:
+        environmentType:
+          oneOf:
+            # ── dev/test/stage branch ──
+            - properties:
+                environmentType:
+                  enum:
+                    - dev
+                    - test
+                    - stage
+                targetEnv:
+                  title: Target Environment
+                  type: string
+                  description: Select the target environment cluster.
+                  enum:
+                    - dev-cluster-1
+                    - dev-cluster-2
+                    - test-cluster-1
+                    - stage-cluster-1
+                namespace:
+                  title: Namespace
+                  type: string
+                  description: Enter the namespace.
+                  pattern: "^[a-z0-9-]+$"
+              required:
+                - targetEnv
+                - namespace
+
+            # ── prod branch (deep nesting) ──
+            - properties:
+                environmentType:
+                  enum:
+                    - prod
+                targetEnvProd:
+                  title: Target Production Environment
+                  type: string
+                  description: Select the production cluster.
+                  enum:
+                    - prod-cluster-1
+                    - prod-cluster-2
+                namespaceProd:
+                  title: Production Namespace
+                  type: string
+                  readonly: true
+                  description: Production namespace (read-only).
+                crType:
+                  title: ServiceNow Change Request Type
+                  type: string
+                  description: Use Normal/Emergency for service deployment, Standard for other tasks.
+                  enum:
+                    - Normal
+                    - Standard
+                    - Emergency
+                    - Incident
+              required:
+                - targetEnvProd
+                - namespaceProd
+                - crType
+              dependencies:
+                crType:
+                  oneOf:
+                    # ── Standard CR ──
+                    - properties:
+                        crType:
+                          enum:
+                            - Standard
+                        crNumber:
+                          title: ServiceNow Change Request Number
+                          type: string
+                          description: Enter ServiceNow Change Request Number.
+                          pattern: "^(CHG)[0-9]+"
+                        deploymentStrategy:
+                          title: Deployment Strategy
+                          type: string
+                          description: Select Deployment Strategy.
+                          enum:
+                            - canary
+                            - rolling-update
+                      required:
+                        - crNumber
+                        - deploymentStrategy
+                      dependencies:
+                        deploymentStrategy:
+                          oneOf:
+                            - properties:
+                                deploymentStrategy:
+                                  enum:
+                                    - canary
+                                phase:
+                                  title: Phase
+                                  type: string
+                                  description: Select Phase.
+                                  enum:
+                                    - PATCH_INGRESS
+                                    - PATCH_HPA
+                                    - SWITCH_LIVE
+                                    - SWITCH_CANARY
+                                    - SCALE_DOWN
+                              required:
+                                - phase
+                              dependencies:
+                                phase:
+                                  oneOf:
+                                    - properties:
+                                        phase:
+                                          enum:
+                                            - PATCH_INGRESS
+                                        canaryWeight:
+                                          title: Canary Weight
+                                          type: number
+                                          description: Enter Canary Weight (0-100).
+                                          minimum: 0
+                                          maximum: 100
+                                      required:
+                                        - canaryWeight
+                                    - properties:
+                                        phase:
+                                          enum:
+                                            - PATCH_HPA
+                                            - SWITCH_LIVE
+                                            - SWITCH_CANARY
+                                            - SCALE_DOWN
+                            - properties:
+                                deploymentStrategy:
+                                  enum:
+                                    - rolling-update
+                                phaseRolling:
+                                  title: Phase
+                                  type: string
+                                  description: Select Phase.
+                                  enum:
+                                    - PATCH_HPA
+                                    - ROLLOUT_RESTART
+                              required:
+                                - phaseRolling
+
+                    # ── Normal / Emergency CR ──
+                    - properties:
+                        crType:
+                          enum:
+                            - Normal
+                            - Emergency
+                        crNumberNormal:
+                          title: ServiceNow Change Request Number
+                          type: string
+                          description: Enter ServiceNow Change Request Number.
+                          pattern: "^(CHG)[0-9]+"
+                        deploymentStrategyNormal:
+                          title: Deployment Strategy
+                          type: string
+                          description: Select Deployment Strategy.
+                          enum:
+                            - canary
+                            - rolling-update
+                      required:
+                        - crNumberNormal
+                        - deploymentStrategyNormal
+
+                    # ── Incident ──
+                    - properties:
+                        crType:
+                          enum:
+                            - Incident
+                        incidentNumber:
+                          title: ServiceNow Incident Number
+                          type: string
+                          description: Enter ServiceNow Incident Number.
+                          pattern: "^(INC)[0-9]+"
+                      required:
+                        - incidentNumber
+
+    # ─────────────────────────────────────────────────────────────────
+    # STEP 6 — All UI Widgets & Array Validation
+    # ─────────────────────────────────────────────────────────────────
+    - title: "Step 6: All UI Widgets & Array Validation"
+      description: |
+        Tests every supported ui:widget type and array field patterns from master-sanity.
+      required:
+        - deployRegion
+        - notificationChannels
+        - logLevel
+        - replicaCount
+        - releaseNotes
+        - enableFeatureFlag
+      properties:
+        deployRegion:
+          title: Deploy Region
+          description: Select the AWS region for deployment.
+          type: string
+          enum:
+            - us-east-1
+            - us-west-2
+            - eu-west-1
+            - ap-southeast-1
+            - ap-northeast-1
+          enumNames:
+            - US East (N. Virginia)
+            - US West (Oregon)
+            - EU West (Ireland)
+            - AP Southeast (Singapore)
+            - AP Northeast (Tokyo)
+          ui:widget: select
+        logLevel:
+          title: Log Level
+          description: Choose the application log verbosity.
+          type: string
+          default: INFO
+          enum:
+            - DEBUG
+            - INFO
+            - WARN
+            - ERROR
+          ui:widget: radio
+        notificationChannels:
+          title: Notification Channels
+          description: Select all channels that should receive alerts.
+          type: array
+          items:
+            type: string
+            enum:
+              - slack
+              - email
+              - pagerduty
+              - msteams
+              - webhook
+          uniqueItems: true
+          ui:widget: checkboxes
+        enableFeatureFlag:
+          title: Enable Feature Flag
+          description: Toggle the feature flag for this deployment.
+          type: boolean
+          default: false
+          ui:widget: checkbox
+        enableMonitoring:
+          title: Enable APM Monitoring
+          description: Attach Datadog / Dynatrace agent to this service.
+          type: boolean
+          default: true
+          ui:widget: checkbox
+        replicaCount:
+          title: Replica Count
+          description: Number of pod replicas (1–20).
+          type: integer
+          default: 2
+          minimum: 1
+          maximum: 20
+        releaseNotes:
+          title: Release Notes
+          description: Describe what changed in this release.
+          type: string
+          minLength: 10
+          maxLength: 2000
+          ui:widget: textarea
+          ui:options:
+            rows: 6
+        tags:
+          title: Resource Tags
+          description: Add 1–10 tags (lowercase alphanumeric and hyphens).
+          type: array
+          minItems: 1
+          maxItems: 10
+          items:
+            type: string
+            pattern: "^[a-z0-9-]+$"
+            minLength: 2
+            maxLength: 30
+        envVars:
+          title: Environment Variables
+          description: Key/value pairs injected into the container.
+          type: array
+          items:
+            type: object
+            required:
+              - key
+              - value
+            properties:
+              key:
+                title: Key
+                type: string
+                pattern: "^[A-Z_][A-Z0-9_]*$"
+              value:
+                title: Value
+                type: string
+
+    # ─────────────────────────────────────────────────────────────────
+    # STEP 7 — anyOf, allOf, if/then/else Patterns
+    # ─────────────────────────────────────────────────────────────────
+    - title: "Step 7: anyOf, allOf, if/then/else Patterns"
+      description: |
+        Tests anyOf branch selection, allOf constraint composition, and if/then/else conditional schema patterns.
+      required:
+        - projectMeta
+      properties:
+        projectId:
+          title: Project ID
+          allOf:
+            - type: string
+              minLength: 3
+            - type: string
+              maxLength: 30
+            - type: string
+              pattern: "^[a-z][a-z0-9_]*$"
+          description: "Tests allOf — 3 constraints merged. Lowercase, underscores, 3-30 chars."
+          ui:placeholder: e.g. my_project_01
+        notificationConfig:
+          title: Notification Channel
+          description: Tests anyOf — user picks Slack OR Email.
+          anyOf:
+            - title: Slack
+              type: object
+              required:
+                - channel
+                - webhookUrl
+              properties:
+                channel:
+                  title: Slack Channel
+                  type: string
+                  pattern: "^#[a-z0-9_-]+$"
+                webhookUrl:
+                  title: Webhook URL
+                  type: string
+                  format: uri
+            - title: Email
+              type: object
+              required:
+                - recipients
+              properties:
+                recipients:
+                  title: Email Recipients
+                  type: string
+                  format: email
+                sendOnSuccess:
+                  title: Send on Success
+                  type: boolean
+                  default: false
+        projectMeta:
+          title: Project Metadata
+          type: object
+          description: Tests nested object rendering as Card.
+          required:
+            - teamName
+            - costCenter
+          properties:
+            teamName:
+              title: Team Name
+              type: string
+              minLength: 2
+            costCenter:
+              title: Cost Center
+              type: string
+              description: "Format: CC-1234"
+              pattern: "^CC-\\d{4}$"
+            contactInfo:
+              title: Contact Info
+              type: object
+              description: Tests double-nested object — inner Card.
+              properties:
+                slackChannel:
+                  title: Team Slack Channel
+                  type: string
+                onCallRotation:
+                  title: On-Call Rotation URL
+                  type: string
+                  format: uri
+
+    # ─────────────────────────────────────────────────────────────────
+    # STEP 8 — if/then/else 3-Way Conditional
+    # ─────────────────────────────────────────────────────────────────
+    - title: "Step 8: if/then/else 3-Way Conditional"
+      description: |
+        Tests if/then/else conditional schema with CREATE/UPDATE/DELETE branches. This tests the else branch rendering when neither CREATE nor UPDATE is selected.
+      required:
+        - operationType
+      properties:
+        operationType:
+          title: Operation Type
+          description: What operation should be performed?
+          type: string
+          enum:
+            - CREATE
+            - UPDATE
+            - DELETE
+          default: CREATE
+      if:
+        properties:
+          operationType:
+            const: CREATE
+      then:
+        required:
+          - newResourceName
+        properties:
+          newResourceName:
+            title: New Resource Name
+            description: Name for the resource being created.
+            type: string
+            minLength: 3
+            maxLength: 63
+            pattern: "^[a-z0-9-]+$"
+          resourceDescription:
+            title: Resource Description
+            type: string
+            ui:widget: textarea
+      else:
+        if:
+          properties:
+            operationType:
+              const: UPDATE
+        then:
+          required:
+            - existingResourceId
+          properties:
+            existingResourceId:
+              title: Existing Resource ID
+              description: ID of the resource to update.
+              type: string
+            changeReason:
+              title: Change Reason
+              description: Reason for this change (required for audit).
+              type: string
+              minLength: 10
+              ui:widget: textarea
+        else:
+          required:
+            - deleteConfirmationFinal
+            - deletionApprover
+          properties:
+            deleteConfirmationFinal:
+              title: Delete Confirmation
+              description: Type DELETE to confirm permanent removal.
+              type: string
+              pattern: "^DELETE$"
+            deletionApprover:
+              title: Approver
+              description: User who approved this deletion.
+              type: string
+
+  steps:
+    - id: trigger-harness-pipeline
+      name: Trigger Harness Pipeline
+      action: trigger:harness-custom-pipeline
+      input:
+        url: "https://qa.harness.io/ng/account/{{ parameters.accountId }}/cd/orgs/{{ parameters.orgId }}/projects/{{ parameters.projectId }}/pipelines/comprehensive-validation-test/executions"
+        inputset:
+          appName: ${{ parameters.appName }}
+          action: ${{ parameters.action }}
+          environmentType: ${{ parameters.environmentType }}
+          certificateTypes: ${{ parameters.certificateTypes }}
+          selectedEnvironments: ${{ parameters.selectedEnvironments }}
+          deployRegion: ${{ parameters.deployRegion }}
+          logLevel: ${{ parameters.logLevel }}
+          replicaCount: ${{ parameters.replicaCount }}
+          operationType: ${{ parameters.operationType }}
+        apikey: ${{ parameters.token }}
+
+    - id: log-summary
+      name: Log Summary
+      action: debug:log
+      input:
+        message: |
+          Comprehensive Validation Test Workflow executed successfully.
+
+          App: ${{ parameters.appName }}
+          Project: ${{ parameters.projectId }}
+          Org: ${{ parameters.orgId }}
+          Action: ${{ parameters.action }}
+          Environment: ${{ parameters.environmentType }}
+          Certificate Types: ${{ parameters.certificateTypes }}
+          Selected Environments: ${{ parameters.selectedEnvironments }}
+          Deploy Region: ${{ parameters.deployRegion }}
+          Feature Flag: ${{ parameters.enableFeatureFlag }}
+          Operation Type: ${{ parameters.operationType }}

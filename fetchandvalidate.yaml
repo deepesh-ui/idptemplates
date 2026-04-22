@@ -1,0 +1,96 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: contextupdate 
+  title: Update Form Context
+  description: A template to test GitSync variables
+spec:
+  owner: deepesh.kumar@harness.io
+  type: service
+  parameters:
+    - title: Fill in some steps
+      properties:
+        formContext:
+           title: Live Form Context
+           description: DEBUG Context
+           type: string
+           ui:field: ContextViewer
+           ui:options:
+            getContextData: {{formContext}}    
+        upload_file:
+          title: Upload File
+          type: string
+          description: Upload any file (try with 100KB+)
+          ui:widget: file            
+        gitusername:
+          title: Github username
+          description: Harness Project Identifier
+          type: string
+          default: deepesh-ui
+        custom:
+          title: GitHub Repos
+          type: string
+          description: Pick one of GitHub Repos
+          ui:field: SelectFieldFromApi
+          ui:options:
+            path: proxy/github-api/users/{{parameters.gitusername}}/repos
+            valueSelector: full_name
+            contextData: 
+              reponame: name
+              branch: default_branch
+              type: visibility                 
+        reponame:
+          title: Repo Name
+          description: Harness Project Identifier
+          type: string            
+        branch:
+          title: Default Branch
+          description: Harness Project Identifier
+          type: string
+        type:
+          title: Visibility
+          description: Harness Project Identifier
+          type: string     
+        userdata:
+          title: user detail
+          type: string
+          description: Pick one of GitHub Repos
+          ui:field: ValidateAndFetch
+          ui:options:
+            path: proxy/github-api/users/{{parameters.gitusername}}
+            contextData: 
+              loginName: login
+              plan: plan.name
+              publicRepos: public_repos
+        gitname:
+          title: User Name
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: {{formContext.loginName}}
+          description: Harness Project Identifier
+          type: string            
+        plan:
+          title: Default Plan
+          description: Harness Project Identifier
+          type: string
+        publicRepos:
+          title: public repos count
+          description: Harness Project Identifier
+          type: number          
+  steps:
+    - id: trigger
+      name: Writing the GitSync Variable
+      action: trigger:harness-custom-pipeline
+      input:
+        url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/module/idp-admin/orgs/default/projects/idpprojectsc/pipelines/DummyPipeline/pipeline-studio/?storeType=INLINE&stageId=DummyStage&sectionId=EXECUTION
+        inputset: 
+          "username": ${{ parameters.username }}
+          "name": ${{ parameters.name }}
+          "uploadFile": ${{ parameters.upload_file}}
+          "pipeline.stages.GitsyncStageTemplate.variables.greetings": ${{ parameters['pipeline.stages.GitsyncStageTemplate.variables.greetings'] }}
+        apikey: ${{ parameters.token }}
+        enableVariableMapping: true
+  output:
+    links:
+      - title: Pipeline Details
+        url: ${{ steps.trigger.output.PipelineUrl }}

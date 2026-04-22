@@ -1,0 +1,53 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: test-template-123
+  title: Test Template 1243
+  description: A template to Deploy service
+spec:
+  owner: deepesh.kumar@harness.io
+  type: service
+  parameters:
+    - title: Test Template
+      properties:   
+         uid:
+           type: string
+           ui:field: SelectFieldFromApi
+           ui:options:
+             placeholder: Select titles
+             path: catalog/entities
+             valueSelector: metadata.uid
+             labelSelector: metadata.name
+             allowArbitraryValues: false          
+         detail:
+           type: string
+           ui:field: SelectFieldFromApi
+           ui:options:
+             placeholder: Select titles
+             path: catalog/entities/by-uid/{{parameters.uid}}
+             arraySelector: relations
+             valueSelector: targetRef
+             allowArbitraryValues: false             
+             setContextData:
+               uid: targetRef
+               account: target.name
+         formContext:
+           title: Live Form Context
+           description: DEBUG Context
+           type: string
+           ui:field: ContextViewer
+           ui:options:
+            getContextData: {{formContext}}
+  steps:
+    - id: trigger
+      name: Run Deploy service
+      action: trigger:harness-custom-pipeline
+      input:
+        url: https://localhost:8181/ng/account/zEaak-FLS425IEO7OLzMUg/module/cd/orgs/default/projects/Deepesh_CDE/pipelines/Idptemplate/pipeline-studio?storeType=INLINE
+        inputset:
+          "username": ${{ parameters.username }}
+        apiKeySecret: ${{ parameters.apiKeySecret }}
+  output:
+    links:
+      - title: Pipeline Details
+        url: ${{ steps.trigger.output.PipelineUrl }}        

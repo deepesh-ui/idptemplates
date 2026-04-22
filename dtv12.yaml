@@ -1,0 +1,190 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: deploydcpspringbootworkflow
+  description: Deploy DCP Springboot template based service
+  title: Deploy DCP Springboot template based service
+  namespace: account-dcp
+spec:
+  output:
+    links:
+      - title: Pipeline Details
+        url: ${{ steps.trigger.output.PipelineUrl }}
+      - title: Click here for next deployment
+        url: ${{ steps.trigger.output.RESET_LINK }}
+    text:
+      - title: Result
+        content: ${{ steps.trigger.output.err_msg }}
+  owner: backend-team
+  type: service
+  parameters:
+    - title: Fill in the repo details
+      properties:
+        token:
+          title: Harness Token
+          type: string
+          ui:widget: password
+          ui:field: HarnessAuthToken
+        team:
+          title: Team Name
+          type: string
+          description: Select Team Name
+          ui:field: HarnessProjectPicker
+          ui:options:
+            setContextData:
+              selected_team: team
+          ui:readonly: true
+        group:
+          type: string
+          description: Group Name
+          ui:widget: hidden
+        type:
+          type: string
+          ui:readonly: true
+          title: Resource type
+          description: Resource type
+          default: service
+          ui:widget: hidden
+        service:
+          title: Service Name
+          type: string
+          description: Enter Service Name
+          ui:readonly: true
+        microservice_name:
+          title: Microservice Name
+          type: string
+          description: Enter Microservice Name
+          ui:readonly: true
+          ui:widget: hidden
+        branch_name:
+          title: Branch Name
+          type: string
+          description: Enter Branch Name
+        github_branches:
+          type: string
+          ui:field: ValidateAndFetch
+          ui:options:
+            placeholder: Select Git hub branch
+            path: proxy/github-api/repos/ATT-DP10/{{ parameters.microservice_name }}/branches/{{ parameters.branch_name }}
+            setContextData:
+              checkbranch: name
+        github_branch:
+          title: Branch Name Is Present
+          ui:field: ContextViewer
+          readonly: true
+          ui:options:
+            getContextData: ${{formContext.checkbranch}}
+          description: Git Hub Branch is present
+          type: string
+          clearOnChange: true
+        environment_type:
+          title: Environment type
+          type: string
+          description: Select env type
+          enum:
+            - dev
+            - test
+            - int
+            - perf
+            - stage
+            - prod
+      dependencies:
+        environment_type:
+          oneOf:
+            - properties:
+                environment_type:
+                  enum:
+                    - dev
+                    - test
+                    - int
+                    - perf
+                    - stage
+                    - prod
+                target_env:
+                  title: Target Environment
+                  type: string
+                  ui:field: SelectFieldFromApi
+                  ui:options:
+                    placeholder: Select Target Environment
+                    path: proxy/harness-idp2-api/v1/entities?kind=resource&type=eks&scopes=account-dcp.{{ parameters.team }}&tags={{ parameters.environment_type }}
+                    valueSelector: name
+                    labelSelector: name
+                    setContextData:
+                      entity_identifier: identifier
+                      entity_aws_region: metadata.aws_region
+                      entity_aws_account: metadata.aws_account
+                      entity_environment_type: metadata.environment_type
+                      entity_environment: metadata.environment
+                      entity_ref: entity_ref
+                    allowArbitraryValues: false
+                    clearOnChange: true
+                cluster_name:
+                  type: string
+                  ui:field: ContextViewer
+                  ui:options:
+                    getContextData: ${{formContext.entity_identifier}}
+                  ui:widget: hidden
+                  clearOnChange: true
+                environment:
+                  type: string
+                  ui:field: ContextViewer
+                  ui:options:
+                    getContextData: ${{formContext.entity_environment}}
+                  ui:widget: hidden
+                  clearOnChange: true
+    - title: Select Environments
+      properties:
+        namespace:
+          title: Namespace
+          type: string
+          readonly: true
+          description: Select Namespace
+          ui:field: SelectFieldFromApi
+          ui:options:
+            placeholder: Select Namespace
+            path: proxy/harness-idp2-api/v1/entities/account-dcp.{{ parameters.team }}/resource/{{ parameters.cluster_name }}?branch_name={{ parameters.environment }}
+            arraySelector: metadata.cluster_namespace
+            valueSelector: namespace
+            allowArbitraryValues: false
+          clearOnchange: true
+        target_env_type:
+          title: Target environment type
+          type: string
+          readonly: true
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: ${{formContext.entity_environment_type}}
+# --- The rest of your parameters and steps remain the same ---
+  steps:
+    - id: trigger
+      name: Deploying service to jenkins
+      action: trigger:harness-custom-pipeline
+      input:
+        url: https://app.harness.io/ng/account/uJ2EBauKT8uVp8leuqRCRQ/module/idp-admin/orgs/DCP/projects/DCP/pipelines/Deploy_DCP_Springboot_Service/pipeline-studio/?storeType=REMOTE&connectorRef=account.dcpgithub&repoName=apm0014514-dcp-workflow-pipelines&branch=feature%2Fidp2Change
+        inputset:
+          team: ${{ parameters.team }}
+          service_name: ${{ parameters.microservice_name }}
+          service: ${{ parameters.service }}
+          branch: ${{ parameters.github_branch}}
+          target_env_type: ${{ parameters.target_env_type }}
+          target_env: ${{ parameters.target_env }}
+          source_env: ${{ parameters.source_env }}
+          source_env_prod: ${{ parameters.source_env_prod}}
+          deployment_strategy_dev: ${{ parameters.deployment_strategy_dev }}
+          deployment_strategy: ${{ parameters.deployment_strategy }}
+          namespace: ${{ parameters.namespace }}
+          phase: ${{ parameters.phase }}
+          type: ${{ parameters.type }}
+          canary_weight: ${{ parameters.canary_weight }}
+          limit_memory: ${{ parameters.limit_memory }}
+          request_memory: ${{ parameters.request_memory }}
+          limit_cpu: ${{ parameters.limit_cpu }}
+          request_cpu: ${{ parameters.request_cpu }}
+          replica_count: ${{ parameters.replica_count }}
+          JAVA_VERSION: ${{ parameters.JAVA_VERSION }}
+          SOURCE_K8S_NAMESPACE: ${{ parameters.SOURCE_K8S_NAMESPACE}}
+          customparams: ${{ parameters.customparams }}
+          CR_type: ${{ parameters.CR_type }}
+          CR_number: ${{ parameters.CR_number }}
+        apikey: ${{ parameters.token }}
+        showOutputVariables: true

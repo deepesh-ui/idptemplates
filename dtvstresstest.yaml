@@ -1,0 +1,687 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: live-validation-stress-test
+  title: "Live Validation Stress Test"
+  description: >
+    Tests every live-validation edge case in Stepper.tsx across 3 steps:
+    Step 1 — basic fields + the EXACT notification-channel oneOf scenario from
+    the debugging session (Slack/Email/PagerDuty). Step 2 — SelectFieldFromApi
+    with setContextData → ContextViewer driving a 3-level nested oneOf chain
+    (environment_type → CR_type → deployment_strategy). Step 3 — multiple
+    simultaneous dependencies on the same step, boolean checkboxes, and
+    pattern+minLength+maxLength stacked validators.
+  tags:
+    - live-validation-test
+    - stress-test
+
+spec:
+  owner: backend-team
+  type: service
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # STEP 1 — Service Info + Notification Channel
+  #
+  # Live-validation scenarios covered:
+  #   1. `service_name` pattern + minLength + maxLength — errors appear on first
+  #      keystroke, clear only when constraints are satisfied.
+  #   2. `notification_channel` with 3-branch oneOf (Slack / Email / PagerDuty):
+  #      — this is EXACTLY the scenario from the debugging session error dump.
+  #      — switching channel must clear the old branch's required errors and
+  #        show only the new branch's errors.
+  #   3. `project` uses real HarnessProjectPicker (calls Harness window API).
+  #   4. `token` uses real HarnessAuthToken (auto-filled from session).
+  #   5. `type` is a hidden field — must NEVER produce a validation error.
+  # ═══════════════════════════════════════════════════════════════════════════
+  parameters:
+    - title: "Step 1 — Service Info & Notifications"
+      required:
+        - project
+        - service_name
+        - description
+        - notification_channel
+      properties:
+        token:
+          title: Harness Token
+          type: string
+          ui:widget: password
+          ui:field: HarnessAuthToken
+
+        project:
+          title: Harness Project
+          type: string
+          description: Select the Harness project to deploy into
+          ui:field: HarnessProjectPicker
+
+        # Hidden field — must never show a validation error
+        type:
+          type: string
+          title: Resource type
+          default: service
+          ui:widget: hidden
+
+        # --- Pattern + minLength + maxLength stacked validators ---
+        # Tests: all three validators fire live; displayed only after touch.
+        service_name:
+          title: Service Name
+          type: string
+          description: >
+            3–50 chars. a-z A-Z 0-9 _ -. Cannot start/end with - or _.
+            No consecutive -- __ -_ _-.
+          minLength: 3
+          maxLength: 50
+          pattern: "(?!.*-_)(?!.*_-)(?!.*--)(?!.*__)(?!.*-$)(?!.*_$)^[a-zA-Z]+[a-zA-Z0-9-_]*[a-zA-Z0-9-_]+$"
+          ui:autofocus: true
+          ui:help: >
+            e.g. "my-service" or "my_service_v2". ITAP IDs not allowed.
+
+        description:
+          title: Description
+          type: string
+          description: What does this service do?
+          minLength: 10
+
+        # --- Exact notification-channel scenario from the debug session ---
+        # Tests: oneOf branch switching, stale error clearing, correct branch pick.
+        notification_channel:
+          title: Notification Channel
+          type: string
+          description: How should deployment results be delivered?
+          enum:
+            - Slack
+            - Email
+            - PagerDuty
+          ui:help: >
+            Select a channel. Required fields will appear based on your choice.
+
+      dependencies:
+        # ── DEPENDENCY: notification_channel → channel-specific required fields
+        # Branch 0 (Slack):   requires channel + webhook_url
+        # Branch 1 (Email):   requires recipients
+        # Branch 2 (PagerDuty): requires service_key
+        #
+        # Test sequence:
+        #   a) Select Slack    → channel + webhook_url errors appear
+        #   b) Switch to Email → channel/webhook_url errors MUST disappear
+        #                        recipients error appears
+        #   c) Switch to PagerDuty → recipients error disappears, service_key appears
+        #   d) Switch back to Slack → only channel + webhook_url errors remain
+        notification_channel:
+          oneOf:
+            - properties:
+                notification_channel:
+                  enum:
+                    - Slack
+                channel:
+                  title: Slack Channel
+                  type: string
+                  description: "e.g. #deployments"
+                webhook_url:
+                  title: Webhook URL
+                  type: string
+                  description: Incoming webhook URL for Slack
+                  pattern: "^https://hooks\\.slack\\.com/.*"
+                send_on_success:
+                  title: Notify on success too?
+                  type: boolean
+                  default: false
+                  ui:widget: checkbox
+              required:
+                - channel
+                - webhook_url
+
+            - properties:
+                notification_channel:
+                  enum:
+                    - Email
+                recipients:
+                  title: Email Recipients
+                  type: string
+                  description: Comma-separated list of email addresses
+                  pattern: "^[\\w.+-]+@[\\w-]+\\.[\\w.]+([,;]\\s*[\\w.+-]+@[\\w-]+\\.[\\w.]+)*$"
+                cc_recipients:
+                  title: CC Recipients
+                  type: string
+                  description: Optional CC list
+              required:
+                - recipients
+
+            - properties:
+                notification_channel:
+                  enum:
+                    - PagerDuty
+                service_key:
+                  title: PagerDuty Service Key
+                  type: string
+                  description: Integration key from your PagerDuty service
+                  minLength: 20
+                severity:
+                  title: Alert Severity
+                  type: string
+                  description: Default severity for alerts
+                  enum:
+                    - critical
+                    - error
+                    - warning
+                    - info
+                  default: error
+              required:
+                - service_key
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # STEP 2 — Environment Config with SelectFieldFromApi + ContextViewer + nested oneOf
+  #
+  # Live-validation scenarios covered:
+  #   1. `target_env` — SelectFieldFromApi (proxy/dummyjson/products) with
+  #      setContextData. Ensures SelectFieldFromApi renders without errors.
+  #   2. `cluster_info` — ContextViewer reads setContextData from Step 2 select.
+  #      Tests: ContextViewer value (from formContext) drives conditional below.
+  #   3. `environment_type` enum → Level-1 oneOf:
+  #        prod   → shows CR_type (required) + deployment_strategy (required)
+  #        non-prod → shows deployment_strategy only (simpler path)
+  #   4. Level-2: CR_type oneOf (Standard / Normal+Emergency / Incident):
+  #        each branch has a different CR_number pattern — tests that switching
+  #        CR_type clears the wrong-pattern error from the previous branch.
+  #   5. Level-3: deployment_strategy oneOf (canary / rolling-update):
+  #        each branch shows a different phase enum — tests 3-level depth.
+  #   6. `github_repo` — SelectFieldFromApi using real proxy/github-api.
+  #   7. `selected_branch` — ContextViewer reading setContextData from github_repo.
+  # ═══════════════════════════════════════════════════════════════════════════
+    - title: "Step 2 — Environment & Deployment Strategy"
+      required:
+        - environment_type
+        - target_env
+      properties:
+        environment_type:
+          title: Environment Tier
+          type: string
+          description: Where are we deploying?
+          enum:
+            - dev
+            - test
+            - int
+            - perf
+            - prod
+
+        # --- SelectFieldFromApi with setContextData (dummyjson as fake cluster API) ---
+        # dummyjson returns {products:[{id, title, category, description, ...}]}
+        # valueSelector: title  →  selected value = product title (fake cluster name)
+        # setContextData extracts `category` into formContext.cluster_category
+        # Tests: SelectFieldFromApi renders, field value flows into touchedFields,
+        #        setContextData writes to formContext correctly.
+        target_env:
+          title: Target Environment / Cluster
+          type: string
+          description: Select a target cluster (powered by live API)
+          ui:field: SelectFieldFromApi
+          ui:options:
+            placeholder: "Select cluster..."
+            path: "proxy/dummyjson/products?limit=8&sortBy=title&order=asc"
+            arraySelector: products
+            valueSelector: title
+            labelSelector: title
+            setContextData:
+              cluster_category: category
+              cluster_description: description
+            allowArbitraryValues: false
+            clearOnChange: true
+
+        # --- ContextViewer reading setContextData from target_env above ---
+        # Tests: ContextViewer correctly picks up formContext.cluster_category
+        #        which was set by the SelectFieldFromApi above.
+        #        IMPORTANT: this field is hidden — it must not produce errors.
+        cluster_info:
+          title: Cluster Info (hidden context)
+          type: string
+          ui:field: ContextViewer
+          ui:options:
+            getContextData: "${{formContext.cluster_category}}"
+          ui:widget: hidden
+          clearOnChange: true
+
+        # --- Real GitHub API: list Backstage repo branches ---
+        # proxy/github-api → api.github.com (configured in app-config.yaml)
+        # Response: [{name, commit, protected}] — plain array, no arraySelector needed
+        # Tests: real proxy call, valueSelector on plain array items.
+        github_branch:
+          title: GitHub Branch
+          type: string
+          description: Select a branch from the backstage/backstage repo
+          ui:field: SelectFieldFromApi
+          ui:options:
+            placeholder: "Select branch..."
+            path: "proxy/github-api/repos/backstage/backstage/branches?per_page=15"
+            valueSelector: name
+            labelSelector: name
+            allowArbitraryValues: false
+
+      dependencies:
+        # ── LEVEL 1: environment_type → prod vs non-prod
+        # Tests: switching between prod and non-prod clears prod-only required errors
+        environment_type:
+          oneOf:
+            # ── Branch A: PROD — shows CR_type + deployment_strategy (required)
+            - properties:
+                environment_type:
+                  enum:
+                    - prod
+                CR_type:
+                  title: ServiceNow Change Request Type
+                  type: string
+                  description: >
+                    Normal/Emergency for deployments, Standard for other tasks,
+                    Incident for all actions.
+                  enum:
+                    - Normal
+                    - Standard
+                    - Emergency
+                    - Incident
+                deployment_strategy:
+                  title: Deployment Strategy
+                  type: string
+                  enum:
+                    - canary
+                    - rolling-update
+              required:
+                - CR_type
+                - deployment_strategy
+              # ── LEVEL 2: CR_type → different CR_number patterns
+              # Tests: switching CR_type must clear the wrong pattern error.
+              #        Standard: CHG prefix | Normal/Emergency: CHG prefix | Incident: INC prefix
+              dependencies:
+                CR_type:
+                  oneOf:
+                    - properties:
+                        CR_type:
+                          enum:
+                            - Standard
+                        CR_number:
+                          title: Change Request Number
+                          type: string
+                          description: "Standard CR — format: CHG0001234"
+                          pattern: "^CHG[0-9]{7}$"
+                      required:
+                        - CR_number
+                      # ── LEVEL 3: deployment_strategy → different phase enums
+                      # Tests: switching strategy clears stale phase error
+                      dependencies:
+                        deployment_strategy:
+                          oneOf:
+                            - properties:
+                                deployment_strategy:
+                                  enum:
+                                    - canary
+                                phase:
+                                  title: Canary Phase
+                                  type: string
+                                  enum:
+                                    - PATCH_INGRESS
+                                    - SWITCH_LIVE
+                                    - ABORT_CANARY
+                                    - ROLLOUT_RESTART
+                              required:
+                                - phase
+                            - properties:
+                                deployment_strategy:
+                                  enum:
+                                    - rolling-update
+                                phase:
+                                  title: Rolling Phase
+                                  type: string
+                                  enum:
+                                    - ROLLOUT_RESTART
+                              required:
+                                - phase
+
+                    - properties:
+                        CR_type:
+                          enum:
+                            - Normal
+                            - Emergency
+                        CR_number:
+                          title: Change Request Number
+                          type: string
+                          description: "Normal/Emergency CR — format: CHG0001234"
+                          pattern: "^CHG[0-9]{7}$"
+                      required:
+                        - CR_number
+                      dependencies:
+                        deployment_strategy:
+                          oneOf:
+                            - properties:
+                                deployment_strategy:
+                                  enum:
+                                    - canary
+                                phase:
+                                  title: Canary Phase
+                                  type: string
+                                  enum:
+                                    - DEPLOY
+                                    - PATCH_INGRESS
+                                    - SWITCH_LIVE
+                                    - ABORT_CANARY
+                                    - ROLLOUT_RESTART
+                              required:
+                                - phase
+                            - properties:
+                                deployment_strategy:
+                                  enum:
+                                    - rolling-update
+                                phase:
+                                  title: Rolling Phase
+                                  type: string
+                                  enum:
+                                    - DEPLOY
+                                    - ROLLOUT_RESTART
+                              required:
+                                - phase
+
+                    - properties:
+                        CR_type:
+                          enum:
+                            - Incident
+                        CR_number:
+                          title: Incident Number
+                          type: string
+                          # Different pattern from CHG! Switching to/from Incident
+                          # tests that the pattern error clears correctly.
+                          description: "Incident — format: INC0001234"
+                          pattern: "^INC[0-9]{7}$"
+                      required:
+                        - CR_number
+                      dependencies:
+                        deployment_strategy:
+                          oneOf:
+                            - properties:
+                                deployment_strategy:
+                                  enum:
+                                    - canary
+                                phase:
+                                  title: Canary Phase
+                                  type: string
+                                  enum:
+                                    - DEPLOY
+                                    - PATCH_INGRESS
+                                    - SWITCH_LIVE
+                                    - ABORT_CANARY
+                                    - ROLLOUT_RESTART
+                              required:
+                                - phase
+                            - properties:
+                                deployment_strategy:
+                                  enum:
+                                    - rolling-update
+                                phase:
+                                  title: Rolling Phase
+                                  type: string
+                                  enum:
+                                    - DEPLOY
+                                    - ROLLOUT_RESTART
+                              required:
+                                - phase
+
+            # ── Branch B: NON-PROD — no CR required, simpler deployment
+            - properties:
+                environment_type:
+                  enum:
+                    - dev
+                    - test
+                    - int
+                deployment_strategy:
+                  title: Deployment Strategy
+                  type: string
+                  enum:
+                    - rolling-update
+                    - recreate
+                  default: rolling-update
+              required:
+                - deployment_strategy
+
+            # ── Branch C: PERF — canary only
+            - properties:
+                environment_type:
+                  enum:
+                    - perf
+                deployment_strategy:
+                  title: Deployment Strategy
+                  type: string
+                  enum:
+                    - canary
+                  default: canary
+              required:
+                - deployment_strategy
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # STEP 3 — Migration Options + Secret Action
+  #
+  # Live-validation scenarios covered:
+  #   1. TWO independent dependencies on the same step simultaneously:
+  #        a) `migration_type` → oneOf (Spring Boot / Spring Framework)
+  #        b) `action` → oneOf (create/update / delete)
+  #      Tests: neither dependency should interfere with the other's branch
+  #             selection in resolveActiveBranch / transformErrors.
+  #   2. `current_java_version` → oneOf: switching 8/11 vs 17 changes the
+  #      target java_version enum — tests that java_version errors clear when
+  #      current_java_version changes.
+  #   3. Boolean checkbox `run_test_coverage` inside a oneOf branch — tests
+  #      RJSF boolean field handling with live validation.
+  #   4. `action` = "delete" reveals `delete_key` (required). Switching to
+  #      "create/update" must immediately clear the delete_key error.
+  #   5. `team_picker` uses a second HarnessProjectPicker on a different step —
+  #      tests that touchedFields are reset between steps correctly.
+  #   6. `tags` is an array of strings — tests array item validation.
+  # ═══════════════════════════════════════════════════════════════════════════
+    - title: "Step 3 — Migration, Secrets & Tags"
+      required:
+        - migration_type
+        - current_java_version
+        - action
+      properties:
+        # Second HarnessProjectPicker — tests step-to-step context isolation
+        target_project:
+          title: Target Harness Project
+          type: string
+          description: Project where the migrated service will land
+          ui:field: HarnessProjectPicker
+
+        migration_type:
+          title: Migration Type
+          type: string
+          description: Which framework are you migrating?
+          enum:
+            - Java - Spring Boot
+            - Java - Spring Framework
+          default: Java - Spring Boot
+
+        current_java_version:
+          title: Current Java Version
+          type: string
+          description: The version you are migrating FROM
+          enum:
+            - "8"
+            - "11"
+            - "17"
+          default: "8"
+
+        action:
+          title: Secret Action
+          type: string
+          description: What should happen to the AWS secret?
+          enum:
+            - create/update
+            - delete
+
+        # Array field — tests: array item type validation fires live
+        tags:
+          title: Tags
+          type: array
+          description: Add labels for this service (must all be strings)
+          items:
+            type: string
+          ui:options:
+            addable: true
+            orderable: false
+            removable: true
+
+      dependencies:
+        # ── DEPENDENCY A: current_java_version → java_version (target)
+        # Switching 8 or 11 → target must be 17
+        # Switching 17 → target must be 21
+        # Tests: java_version error from the wrong branch clears on switch.
+        current_java_version:
+          oneOf:
+            - properties:
+                current_java_version:
+                  enum:
+                    - "8"
+                    - "11"
+                java_version:
+                  title: Target Java Version
+                  type: string
+                  description: You will migrate TO this version
+                  enum:
+                    - "17"
+                  default: "17"
+            - properties:
+                current_java_version:
+                  enum:
+                    - "17"
+                java_version:
+                  title: Target Java Version
+                  type: string
+                  description: You will migrate TO this version
+                  enum:
+                    - "21"
+                  default: "21"
+
+        # ── DEPENDENCY B: migration_type → framework version + boolean checkbox
+        # Tests: boolean type (run_test_coverage) in a oneOf branch.
+        #        Switching Spring Boot ↔ Spring Framework must clear the
+        #        target_boot/target_spring required errors from the old branch.
+        migration_type:
+          oneOf:
+            - properties:
+                migration_type:
+                  enum:
+                    - Java - Spring Boot
+                target_boot:
+                  title: Target Spring Boot Version
+                  type: string
+                  enum:
+                    - 3.5.0
+                    - 3.4.5
+                    - 3.3.12
+                  default: "3.5.0"
+                run_test_coverage:
+                  title: Run test coverage Before & After migration
+                  type: boolean
+                  default: false
+                  ui:widget: checkbox
+                require_pr_review:
+                  title: Require PR review before merge
+                  type: boolean
+                  default: true
+                  ui:widget: checkbox
+              required:
+                - target_boot
+
+            - properties:
+                migration_type:
+                  enum:
+                    - Java - Spring Framework
+                target_spring:
+                  title: Target Spring Framework Version
+                  type: string
+                  enum:
+                    - 6.2.0
+                    - 5.3.39
+                  default: "6.2.0"
+                run_test_coverage:
+                  title: Run test coverage Before & After migration
+                  type: boolean
+                  default: false
+                  ui:widget: checkbox
+                require_pr_review:
+                  title: Require PR review before merge
+                  type: boolean
+                  default: true
+                  ui:widget: checkbox
+              required:
+                - target_spring
+
+        # ── DEPENDENCY C: action → delete_key (visible only when deleting)
+        # Tests: "delete" reveals delete_key (required).
+        #        Switching back to "create/update" must IMMEDIATELY clear the
+        #        delete_key required error. This tests that visibleFieldPaths
+        #        correctly excludes delete_key and touchedFields is pruned.
+        action:
+          oneOf:
+            - properties:
+                action:
+                  enum:
+                    - delete
+                delete_key:
+                  title: Keys to Delete
+                  type: string
+                  description: >
+                    Comma-separated list of secret keys to remove.
+                    e.g. DB_PASSWORD,API_SECRET
+                  minLength: 1
+              required:
+                - delete_key
+
+            - properties:
+                action:
+                  enum:
+                    - create/update
+                secret_value:
+                  title: Secret Value
+                  type: string
+                  description: >
+                    The new or updated value for the secret.
+                    Leave blank to keep the existing value.
+                  ui:widget: password
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  steps:
+    - id: trigger
+      name: Execute pipeline
+      action: trigger:harness-custom-pipeline
+      input:
+        url: "https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/all/orgs/default/pipelines/live_validation_test/pipeline-studio/"
+        inputset:
+          project: ${{ parameters.project }}
+          service_name: ${{ parameters.service_name }}
+          description: ${{ parameters.description }}
+          notification_channel: ${{ parameters.notification_channel }}
+          channel: ${{ parameters.channel }}
+          webhook_url: ${{ parameters.webhook_url }}
+          recipients: ${{ parameters.recipients }}
+          service_key: ${{ parameters.service_key }}
+          environment_type: ${{ parameters.environment_type }}
+          target_env: ${{ parameters.target_env }}
+          github_branch: ${{ parameters.github_branch }}
+          CR_type: ${{ parameters.CR_type }}
+          CR_number: ${{ parameters.CR_number }}
+          deployment_strategy: ${{ parameters.deployment_strategy }}
+          phase: ${{ parameters.phase }}
+          migration_type: ${{ parameters.migration_type }}
+          current_java_version: ${{ parameters.current_java_version }}
+          java_version: ${{ parameters.java_version }}
+          target_boot: ${{ parameters.target_boot }}
+          target_spring: ${{ parameters.target_spring }}
+          run_test_coverage: ${{ parameters.run_test_coverage }}
+          action: ${{ parameters.action }}
+          delete_key: ${{ parameters.delete_key }}
+          secret_value: ${{ parameters.secret_value }}
+          tags: ${{ parameters.tags }}
+        apikey: ${{ parameters.token }}
+        showOutputVariables: true
+
+  output:
+    links:
+      - title: Pipeline Details
+        url: ${{ steps.trigger.output.PipelineUrl }}
+    text:
+      - title: Result
+        content: ${{ steps.trigger.output.build_result }}

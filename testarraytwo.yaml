@@ -1,0 +1,48 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: testarraynewonetest
+  namespace: account
+  title: Test Array
+spec:
+  output:
+    text:
+      - title: Status
+        content: >
+          Repository-Bootstrapping-Output : `${{
+          steps.trigger.output['pipeline.stages.Create_CI_Pipelines.spec.execution.steps.Run_1.output.outputVariables.result']
+          }}`
+  lifecycle: production
+  owner: user:account/deepesh.kumar
+  type: service
+  parameters:
+    - title: Basic Information
+      type: object
+      properties:
+        token:
+          title: Harness Token
+          type: string
+          visible: false
+          mask: true
+          ui:widget: password
+          ui:field: HarnessAuthToken
+        usernames:
+          title: User ID's
+          type: array
+          description: User ID's of the Developers/DevOps Engineers who need access to the
+            created repository
+          items:
+            type: string
+          uniqueItems: true
+      required:
+        - usernames
+  steps:
+    - id: trigger
+      name: Kong Onboarding Repository Bootstrapping
+      action: trigger:harness-custom-pipeline
+      input:
+        url: https://localhost:8181/ng/account/ffv4xhBKTwugown632slIw/module/cd/orgs/default/projects/sample1/pipelines/test/pipeline-studio/?storeType=INLINE&stageId=test123&sectionId=EXECUTION
+        inputset:
+          usernames: ${{ parameters.usernames | join(",") }}
+        apikey: ${{ parameters.token }}
+        showOutputVariables: true

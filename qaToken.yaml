@@ -1,0 +1,33 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: x-api-key-QA
+  title: Deploy service using x-api-key
+  description: A template to Deploy service
+spec:
+  owner: deepesh.kumar@harness.io
+  type: service
+  parameters:
+    - title: Deploy service
+      required:
+        - username
+      properties:      
+        username:
+          title: Username
+          type: string
+        apiKeySecret:  
+          title: API Key Secret
+          type: string
+  steps:
+    - id: trigger
+      name: Run Deploy service
+      action: trigger:harness-custom-pipeline
+      input:
+        url: https://localhost:8181/ng/account/zEaak-FLS425IEO7OLzMUg/module/cd/orgs/default/projects/Deepesh_CDE/pipelines/Idptemplate/pipeline-studio?storeType=INLINE
+        inputset:
+          "username": ${{ parameters.username }}
+        apiKeySecret: ${{ parameters.apiKeySecret }}
+  output:
+    links:
+      - title: Pipeline Details
+        url: ${{ steps.trigger.output.PipelineUrl }}

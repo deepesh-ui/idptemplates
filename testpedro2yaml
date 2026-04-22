@@ -1,0 +1,12 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: Test_Pedro2
+  namespace: account
+  annotations:
+    subid: 8b70b453-5787-4b3f-b959-3ec80eaf8e31
+  title: TestPedro
+spec:
+  lifecycle: prod
+  type: ezworkspace03
+  owner: group:account/_account_all_users

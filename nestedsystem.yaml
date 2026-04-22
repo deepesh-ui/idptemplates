@@ -1,0 +1,11 @@
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: nested-system
+  description: System of System
+spec:
+  owner: artist-relations-team
+  domain: artists
+  system:
+    - artist-engagement-portal
+    - artist-engagement-portal-new

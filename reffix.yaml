@@ -1,0 +1,73 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: ref-fix
+  title: Ref fix
+  description: ref fix
+spec:
+  owner: deepesh.kumar@harness.io
+  type: service
+  parameters:
+  - title: Step 1
+    description: Step 1 description
+    type: object           
+    properties:         
+        data:
+          title: Step 1 Data
+          type: object
+          properties:
+            refInfo:
+              $ref: "#/refdefinitions/refdata"
+    refdefinitions:
+      refdata:    
+        title: Ref Title
+        type: object
+        properties:
+          proppertyOne:
+            title: Ref Propperty One
+            description: Select the desired value
+            type: string
+        dependencies:
+          proppertyOne:
+            oneOf:
+              - properties:
+                  Select_Container:
+                    type: string
+                    title: Select Container
+                    description: Select an option
+                  customFieldOne:
+                    title: Custom Scaffolder Component
+                    type: string
+                    description: Custom Scaffolder Component Description
+                    ui:field: CustomField                  
+                required:
+                  - customFieldOne
+              - properties:
+                  Select_Container:
+                    type: string
+                    title: Select Container
+                    description: Select an option
+                  customFieldTwo:
+                    title: Custom Scaffolder Component
+                    type: string
+                    description: Custom Scaffolder Component Description
+                    ui:field: CustomField                  
+                required:
+                  - customFieldTwo
+           
+  steps:
+    - id: trigger
+      name: Run Deploy service
+      action: trigger:harness-custom-pipeline
+      input:
+        url: https://qa.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/all/orgs/default/projects/Deepesh_CDE/pipelines/Idptemplate/pipeline-studio/?storeType=INLINE
+        inputset: 
+          "name": ${{ parameters.name }}
+          "username": ${{ parameters.username }}
+          "pipeline.stages.deploy.variables.version": ${{ parameters.version }}
+          "pipeline.stages.deploy.spec.execution.steps.ShellScript_1.spec.environmentVariables.scriptVar":  ${{ parameters.username }}
+        apiKeySecret: ${{ parameters.apiKeySecret }}
+  output:
+    links:
+      - title: Pipeline Details
+        url: ${{ steps.trigger.output.PipelineUrl }}
